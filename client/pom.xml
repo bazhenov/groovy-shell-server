@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<project>
+	<parent>
+		<artifactId>groovy-shell</artifactId>
+		<groupId>com.farpost</groupId>
+		<version>1.0-SNAPSHOT</version>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.farpost.groovy-shell</groupId>
+	<artifactId>client</artifactId>
+	<name>client</name>
+	<version>1.0-SNAPSHOT</version>
+	<url>http://maven.apache.org</url>
+	<dependencies>
+		<dependency>
+			<groupId>jline</groupId>
+			<artifactId>jline</artifactId>
+			<version>0.9.94</version>
+		</dependency>
+	</dependencies>
+</project>

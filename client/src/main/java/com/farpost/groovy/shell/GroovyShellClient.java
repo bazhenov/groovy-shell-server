@@ -1,12 +1,12 @@
-package com.iterative.groovy.service;
-
-import jline.ConsoleReader;
+package com.farpost.groovy.shell;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.nio.ByteBuffer;
+import java.net.InetSocketAddress;
+
+import jline.ConsoleReader;
 
 public class GroovyShellClient {
 
