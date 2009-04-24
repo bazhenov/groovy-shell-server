@@ -11,8 +11,20 @@ import jline.ConsoleReader;
 public class GroovyShellClient {
 
 	public static void main(String[] args) throws InterruptedException, IOException {
-		SocketChannel channel = null;
-		channel = SocketChannel.open(new InetSocketAddress("localhost", 6789));
+		if ( args.length != 2 ) {
+			usage();
+			return;
+		}
+		String host = args[0];
+		int port = 0;
+		try {
+			port = Integer.parseInt(args[1]);
+		} catch ( NumberFormatException e ) {
+			System.out.println("Invalid port given: "+args[1]);
+		}
+
+		SocketChannel channel;
+		channel = SocketChannel.open(new InetSocketAddress(host, port));
 
 		Thread thread = new Thread(new ReadTask(channel));
 		thread.setDaemon(true);
@@ -38,6 +50,10 @@ public class GroovyShellClient {
 			thread.interrupt();
 			thread.join();
 		}
+	}
+
+	private static void usage() {
+		System.out.println("Usage: remote-groovysh host port");
 	}
 }
 

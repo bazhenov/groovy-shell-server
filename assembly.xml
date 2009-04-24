@@ -2,9 +2,17 @@
 	<formats>
 		<format>tar.gz</format>
 	</formats>
+	<files>
+		<file>
+			<source>${basedir}/bin/remote-groovysh</source>
+			<outputDirectory>bin</outputDirectory>
+			<fileMode>755</fileMode>
+		</file>
+
+	</files>
 	<dependencySets>
 		<dependencySet>
-			<outputDirectory>/lib</outputDirectory>
+			<outputDirectory>lib</outputDirectory>
 			<excludes>
 				<exclude>junit:junit</exclude>
 			</excludes>
