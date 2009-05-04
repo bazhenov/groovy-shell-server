@@ -1,10 +1,4 @@
 #!/bin/sh
 
 cd `dirname $0`/..
-
-for library in lib/*.jar;
-do
-	CP="$CP:$library"
-done
-
-java -cp $CP com.farpost.groovy.shell.GroovyShellClient $@
+java -cp ./lib/client-1.0-SNAPSHOT.jar:./lib/* com.farpost.groovy.shell.GroovyShellClient $@
