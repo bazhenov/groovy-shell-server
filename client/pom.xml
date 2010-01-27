@@ -17,5 +17,27 @@
 
 	<build>
 		<finalName>groovy-shell-client-${project.version}</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>verify</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
 	</build>
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>snapshots</id>
+			<name>snapshots</name>
+			<url>http://jira.dev.loc:8085/archiva/repository/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
 </project>

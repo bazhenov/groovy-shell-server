@@ -44,14 +44,12 @@ public class GroovyShellService extends GroovyService {
 	}
 
 	public void launch() {
-		logger.info("GroovyShellService launch()");
-
 		try {
 			serverSocket = new ServerSocket(port);
 			logger.info("GroovyShellService launch() serverSocket: " + serverSocket);
 
 			while ( true ) {
-				Socket clientSocket = null;
+				Socket clientSocket;
 				try {
 					clientSocket = serverSocket.accept();
 					logger.info("GroovyShellService launch() clientSocket: " + clientSocket);
@@ -65,14 +63,16 @@ public class GroovyShellService extends GroovyService {
 				clientThread.start();
 			}
 		} catch ( IOException e ) {
-			logger.debug("e: " + e);
+			logger.error("Error in shell dispatcher thread", e);
 		} finally {
-			try {
-				serverSocket.close();
-			} catch ( IOException e ) {
-				logger.warn("e: " + e);
+			if ( serverSocket != null ) {
+				try {
+					serverSocket.close();
+				} catch ( IOException e ) {
+					logger.error("Error while closing socket", e);
+				}
+				logger.info("GroovyShellService launch() closed connection");
 			}
-			logger.info("GroovyShellService launch() closed connection");
 		}
 	}
 
