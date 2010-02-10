@@ -34,7 +34,7 @@ public class GroovyShellThread extends Thread {
 	private Binding binding;
 
 	public GroovyShellThread(Socket socket, Binding binding) {
-		super();
+		super("Groovy shell client thread: " + socket);
 		this.socket = socket;
 		this.binding = binding;
 	}

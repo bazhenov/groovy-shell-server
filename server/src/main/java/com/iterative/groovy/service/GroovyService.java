@@ -39,13 +39,13 @@ public abstract class GroovyService {
 	}
 
 	public void launchInBackground() {
-		Thread serverThread = new Thread() {
+		Thread serverThread = new Thread("Groovy shell acceptor thread") {
 			@Override
 			public void run() {
 				try {
 					launch();
 				} catch ( Exception e ) {
-					e.printStackTrace();
+					logger.error("Exception occurred in dispatched thread", e);
 				}
 			}
 		};

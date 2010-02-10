@@ -46,24 +46,29 @@ public class GroovyShellService extends GroovyService {
 	public void launch() {
 		try {
 			serverSocket = new ServerSocket(port);
-			logger.info("GroovyShellService launch() serverSocket: " + serverSocket);
+			if ( logger.isInfoEnabled() ) {
+				logger.info("Groovy shell started on " + serverSocket);
+			}
 
 			while ( true ) {
-				Socket clientSocket;
 				try {
-					clientSocket = serverSocket.accept();
-					logger.info("GroovyShellService launch() clientSocket: " + clientSocket);
-				} catch ( IOException e ) {
-					logger.debug("e: " + e);
-					return;
-				}
+					Socket clientSocket = serverSocket.accept();
+					if ( logger.isDebugEnabled() ) {
+						logger.debug("Groovy shell client accepted: " + clientSocket);
+					}
 
-				GroovyShellThread clientThread = new GroovyShellThread(clientSocket, createBinding());
-				threads.add(clientThread);
-				clientThread.start();
+					GroovyShellThread clientThread = new GroovyShellThread(clientSocket, createBinding());
+					threads.add(clientThread);
+					clientThread.start();
+					if ( logger.isDebugEnabled() ) {
+						logger.debug("Groovy shell thread started: " + clientThread.getName());
+					}
+				} catch ( Exception e ) {
+					logger.error("Error while accepting groovy shell client", e);
+				}
 			}
-		} catch ( IOException e ) {
-			logger.error("Error in shell dispatcher thread", e);
+		} catch ( Exception e ) {
+			logger.error("Error in shell dispatcher thread. Stopping thread", e);
 		} finally {
 			if ( serverSocket != null ) {
 				try {
@@ -71,7 +76,9 @@ public class GroovyShellService extends GroovyService {
 				} catch ( IOException e ) {
 					logger.error("Error while closing socket", e);
 				}
-				logger.info("GroovyShellService launch() closed connection");
+				if ( logger.isInfoEnabled() ) {
+					logger.info("Groovy shell stopped");
+				}
 			}
 		}
 	}

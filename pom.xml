@@ -15,6 +15,20 @@
 		<module>client</module>
 	</modules>
 
+	<dependencies>
+		<dependency>
+			<groupId>jline</groupId>
+			<artifactId>jline</artifactId>
+			<version>0.9.94</version>
+			<exclusions>
+				<exclusion>
+					<groupId>junit</groupId>
+					<artifactId>junit</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+	</dependencies>
+
 	<build>
 		<finalName>remote-groovysh-${project.version}</finalName>
 		<plugins>
