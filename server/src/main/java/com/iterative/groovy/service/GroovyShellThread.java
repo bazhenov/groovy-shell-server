@@ -17,10 +17,10 @@ package com.iterative.groovy.service;
 
 import groovy.lang.Binding;
 
-import java.io.InputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.net.Socket;
 
+import org.apache.log4j.Logger;
 import org.codehaus.groovy.tools.shell.Groovysh;
 import org.codehaus.groovy.tools.shell.IO;
 
@@ -32,6 +32,7 @@ public class GroovyShellThread extends Thread {
 	public static final String OUT_KEY = "out";
 	private Socket socket;
 	private Binding binding;
+	private Logger log = Logger.getLogger(GroovyShellThread.class);
 
 	public GroovyShellThread(Socket socket, Binding binding) {
 		super("Groovy shell client thread: " + socket);
@@ -41,9 +42,11 @@ public class GroovyShellThread extends Thread {
 
 	@Override
 	public void run() {
+		PrintStream out = null;
+		InputStream in = null;
 		try {
-			final PrintStream out = new PrintStream(socket.getOutputStream());
-			final InputStream in = socket.getInputStream();
+			out = new PrintStream(socket.getOutputStream());
+			in = socket.getInputStream();
 
 			binding.setVariable(OUT_KEY, out);
 
@@ -56,11 +59,21 @@ public class GroovyShellThread extends Thread {
 				e.printStackTrace();
 			}
 
-			out.close();
-			in.close();
-			socket.close();
+
 		} catch ( Exception e ) {
-			e.printStackTrace();
+			log.error("Exception in groovy shell client thread", e);
+		} finally {
+			try {
+				if ( out != null ) {
+					out.close();
+				}
+				if ( in != null ) {
+					in.close();
+				}
+				socket.close();
+			} catch ( IOException e ) {
+				log.error("Error while closing connection with groovy shell client", e);
+			}
 		}
 	}
 
