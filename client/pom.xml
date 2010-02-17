@@ -7,6 +7,11 @@
 	<name>client</name>
 	<version>1.0-SNAPSHOT</version>
 	<url>http://maven.apache.org</url>
+	<parent>
+		<groupId>com.farpost.groovy-shell</groupId>
+		<artifactId>groovy-shell-parent</artifactId>
+		<version>1.0-SNAPSHOT</version>
+	</parent>
 
 	<build>
 		<finalName>groovy-shell-client-${project.version}</finalName>

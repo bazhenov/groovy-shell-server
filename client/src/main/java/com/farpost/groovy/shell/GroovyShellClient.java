@@ -20,7 +20,7 @@ public class GroovyShellClient {
 		try {
 			port = Integer.parseInt(args[1]);
 		} catch ( NumberFormatException e ) {
-			System.out.println("Invalid port given: "+args[1]);
+			System.out.println("Invalid port given: " + args[1]);
 		}
 
 		SocketChannel channel;
@@ -36,15 +36,17 @@ public class GroovyShellClient {
 			PrintStream out = System.out;
 
 			int i;
-			ByteBuffer buffer = ByteBuffer.allocate(1);
+			ByteBuffer buffer = ByteBuffer.allocate(2);
 			while ( (i = in.readVirtualKey()) >= 0 ) {
+				//System.out.print("["+i+"|"+(i&0xff)+"]");
 				buffer.clear();
-				buffer.put((byte) i);
+				buffer.putChar((char) i);
 				buffer.flip();
 				channel.write(buffer);
 			}
 			out.println();
 		} catch ( IOException e ) {
+			throw new RuntimeException(e);
 		} finally {
 			channel.close();
 			thread.interrupt();
@@ -73,14 +75,20 @@ class ReadTask implements Runnable {
 					return;
 				}
 				buffer.flip();
-				for ( int i = buffer.position(); i < buffer.limit(); i++ ) {
-					byte c = buffer.get(i);
-					System.out.print((char) c);
+				while ( buffer.hasRemaining() ) {
+					byte first = buffer.get();
+					if ( (first & 0xE0) == 0xC0 ) {
+						byte second = buffer.get();
+						System.out.print(new String(new byte[] {first, second}, "UTF-8"));
+					}else{
+						System.out.print((char) first);
+					}
 				}
 				buffer.clear();
 			}
 			channel.close();
 		} catch ( IOException e ) {
+			throw new RuntimeException(e);
 		}
 	}
 }

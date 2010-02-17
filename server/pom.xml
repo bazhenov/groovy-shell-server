@@ -9,8 +9,8 @@
 	<name>server</name>
 	<url>http://maven.apache.org</url>
 	<parent>
-		<artifactId>groovy-shell</artifactId>
-		<groupId>com.farpost</groupId>
+		<groupId>com.farpost.groovy-shell</groupId>
+		<artifactId>groovy-shell-parent</artifactId>
 		<version>1.0-SNAPSHOT</version>
 	</parent>
 

@@ -46,7 +46,7 @@ public class GroovyShellThread extends Thread {
 		InputStream in = null;
 		try {
 			out = new PrintStream(socket.getOutputStream());
-			in = socket.getInputStream();
+			in = new UtfInputStream(socket.getInputStream());
 
 			binding.setVariable(OUT_KEY, out);
 

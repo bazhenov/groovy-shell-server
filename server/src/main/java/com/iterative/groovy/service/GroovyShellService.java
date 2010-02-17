@@ -16,8 +16,7 @@
 package com.iterative.groovy.service;
 
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.util.*;
 
 /**
@@ -50,9 +49,11 @@ public class GroovyShellService extends GroovyService {
 				logger.info("Groovy shell started on " + serverSocket);
 			}
 
-			while ( true ) {
+			Thread self = Thread.currentThread();
+			while ( !self.isInterrupted() ) {
 				try {
 					Socket clientSocket = serverSocket.accept();
+
 					if ( logger.isDebugEnabled() ) {
 						logger.debug("Groovy shell client accepted: " + clientSocket);
 					}
@@ -63,8 +64,9 @@ public class GroovyShellService extends GroovyService {
 					if ( logger.isDebugEnabled() ) {
 						logger.debug("Groovy shell thread started: " + clientThread.getName());
 					}
-				} catch ( Exception e ) {
-					logger.error("Error while accepting groovy shell client", e);
+				} catch ( SocketException e ) {
+					logger.info("Stopping groovy shell thread", e);
+					break;
 				}
 			}
 		} catch ( Exception e ) {
