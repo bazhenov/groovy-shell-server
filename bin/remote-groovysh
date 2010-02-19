@@ -1,4 +1,0 @@
-#!/bin/sh
-
-cd `dirname $0`/..
-java -cp ./lib/client-1.0-SNAPSHOT.jar:./lib/* com.farpost.groovy.shell.GroovyShellClient $@

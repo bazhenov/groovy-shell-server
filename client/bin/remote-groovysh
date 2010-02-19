@@ -1,0 +1,7 @@
+#!/bin/sh
+
+LINK=$0
+[ -h $0 ] && LINK=`readlink $0`
+WHOME=`dirname $LINK`/..
+
+java -cp $WHOME/lib/groovy-shell-client-1.0-SNAPSHOT.jar:$WHOME/lib/* com.farpost.groovy.shell.GroovyShellClient $@
