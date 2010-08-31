@@ -5,7 +5,7 @@
 	<groupId>com.farpost.groovy-shell</groupId>
 	<artifactId>groovy-shell-client</artifactId>
 	<name>client</name>
-	<version>1.0-SNAPSHOT</version>
+	<version>1.0</version>
 	<url>http://maven.apache.org</url>
 	<parent>
 		<groupId>com.farpost.groovy-shell</groupId>
@@ -16,18 +16,6 @@
 	<build>
 		<finalName>groovy-shell-client-${project.version}</finalName>
 		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<executions>
-					<execution>
-						<phase>verify</phase>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<configuration>
@@ -44,12 +32,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
-	<distributionManagement>
-		<snapshotRepository>
-			<id>snapshots</id>
-			<name>snapshots</name>
-			<url>http://jira.dev.loc:8085/archiva/repository/snapshots</url>
-		</snapshotRepository>
-	</distributionManagement>
 </project>
