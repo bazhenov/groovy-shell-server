@@ -12,8 +12,8 @@
 
 	<parent>
 		<groupId>com.farpost.maven</groupId>
-		<artifactId>farpost-maven-project</artifactId>
-		<version>1.0.0</version>
+		<artifactId>maven-project</artifactId>
+		<version>1.0.3</version>
 	</parent>
 
 	<modules>
