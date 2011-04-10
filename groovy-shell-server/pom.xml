@@ -6,8 +6,7 @@
 	<artifactId>groovy-shell-server</artifactId>
 	<packaging>jar</packaging>
 	<version>1.0</version>
-	<name>server</name>
-	<url>http://maven.apache.org</url>
+	<name>Groovy Shell Server</name>
 	<parent>
 		<groupId>com.farpost.groovy-shell</groupId>
 		<artifactId>groovy-shell-parent</artifactId>

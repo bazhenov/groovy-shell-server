@@ -5,7 +5,8 @@ import java.io.IOException;
 public class Main {
 
 	public static void main(String[] args) throws IOException {
-		GroovyService service = new GroovyShellService(6789);
-		service.launch();
+		GroovyShellService service = new GroovyShellService();
+		service.setPort(6789);
+		service.start();
 	}
 }

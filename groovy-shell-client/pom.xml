@@ -4,9 +4,8 @@
 	<packaging>jar</packaging>
 	<groupId>com.farpost.groovy-shell</groupId>
 	<artifactId>groovy-shell-client</artifactId>
-	<name>client</name>
+	<name>Groovy Shell Client</name>
 	<version>1.0</version>
-	<url>http://maven.apache.org</url>
 	<parent>
 		<groupId>com.farpost.groovy-shell</groupId>
 		<artifactId>groovy-shell-parent</artifactId>
