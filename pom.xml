@@ -47,7 +47,4 @@
 		</dependency>
 	</dependencies>
 
-	<build>
-		<finalName>remote-groovysh-${project.version}</finalName>
-	</build>
 </project>

@@ -6,6 +6,10 @@
 	<dependencySets>
 		<dependencySet>
 			<outputDirectory>lib</outputDirectory>
+			<excludes>
+				<exclude>ch.qos.logback:logback-classic</exclude>
+				<exclude>ch.qos.logback:logback-core</exclude>
+			</excludes>
 		</dependencySet>
 	</dependencySets>
 </assembly>
