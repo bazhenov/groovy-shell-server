@@ -22,6 +22,7 @@ import java.util.Map;
 
 /**
  * @author Bruce Fancher
+ * @author Denis Bazhenov
  */
 public class GroovyShellService {
 

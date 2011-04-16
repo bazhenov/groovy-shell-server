@@ -1,0 +1,66 @@
+Groovysh Server
+===============
+
+Introduction
+------------
+
+If you are familiar with groovy, you know what `groovysh` is. It's damn simple REPL (read, evaluate, print, loop) shell for evaluating
+groovy code. And `groovy-shell-server` is full featured groovy shell inside your application.
+
+How many times you are in situation when all you need is to call some method inside your application, but the only way to do it
+is JMX or custom user interface (web page, for instance)? Groovy shell server allows you to run REPL shell inside your application
+and work with it like you are using `groovysh`.
+
+Groovy shell server uses `groovysh` API inside, so all features of `groovysh` (autocompletion, history etc.) are supported.
+
+Installation
+------------
+
+Just drop `groovy-shell-x.x.jar` in your application classpath. In the moment it's the only option. In a future you
+will be able to use it as a regular maven dependency.
+
+Using
+-----
+
+In your application you should start `GroovyShellService`:
+
+	GroovyShellService service = new GroovyShellService();
+	service.setPort(6789);
+	service.setBindings(new HashMap<String, Object>() {{
+		put("foo", obj1);
+		put("bar", obj2);
+	}});
+								
+	service.start();
+
+And destroy it on application exit:
+
+	service.destroy();
+
+Groovy shell server use custom client for connect to a server. After you download a package, you should unpack it
+and it's ready to go:
+
+	$ tar xvf groovy-shell-client-1.0.tar.gz 
+	x groovy-shell-client-1.0/lib/slf4j-api-1.6.1.jar
+	x groovy-shell-client-1.0/lib/jline-0.9.94.jar
+	x groovy-shell-client-1.0/lib/logback-classic-0.9.25.jar
+	x groovy-shell-client-1.0/lib/logback-core-0.9.25.jar
+	x groovy-shell-client-1.0/lib/groovy-shell-client-1.0.jar
+	x groovy-shell-client-1.0/bin/remote-groovysh
+	$ ./groovy-shell-client-1.0/bin/remote-groovysh localhost 6789
+	Groovy Shell (1.5.6, JVM: 19.1-b02-334)
+	Type 'help' or '\h' for help.
+	-------------------------------------------------------------------------------
+	groovy:000> (1..10).each { println "Kill all humans!" }
+	Kill all humans!
+	Kill all humans!
+	Kill all humans!
+	Kill all humans!
+	Kill all humans!
+	Kill all humans!
+	Kill all humans!
+	Kill all humans!
+	Kill all humans!
+	Kill all humans!
+	===> 1..10
+	groovy:000>
