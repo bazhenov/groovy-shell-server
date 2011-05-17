@@ -67,17 +67,19 @@ and it's ready to go:
 
 Build
 -----
-Use maven-assembly plugin to build and create archive of groovy-shell-server:
+Use `maven-assembly` plugin to build and create archive of `groovy-shell-server`:
 
 	mvn -f groovy-shell-server/pom.xml assembly:assembly
 
-and groovy-shell-client:
+and `groovy-shell-client`:
 
 	mvn -f groovy-shell-client/pom.xml assembly:assembly
 
-Archives will be placed in groovy-shell-server/target/ and groovy-shell-client/target/ respectively.
+Archives will be placed in `groovy-shell-server/target/` and `groovy-shell-client/target/` respectively.
 
-In order to simple run applications you can use maven-exec plugin:
+### Simple run
+
+In order to simple run applications you can use `maven-exec` plugin:
 
 	mvn -f groovy-shell-server/pom.xml exec:java -Dexec.mainClass=com.iterative.groovy.service.Main
 
