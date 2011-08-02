@@ -15,13 +15,16 @@
  */
 package com.farpost.groovy.shell;
 
+import jline.ConsoleReader;
+
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.channels.SocketChannel;
-import java.nio.ByteBuffer;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+import java.nio.channels.WritableByteChannel;
 
-import jline.ConsoleReader;
+import static java.lang.Thread.currentThread;
 
 /**
  * @author Denis Bazhenov
@@ -29,7 +32,7 @@ import jline.ConsoleReader;
 public class GroovyShellClient {
 
 	public static void main(String[] args) throws InterruptedException, IOException {
-		if ( args.length != 2 ) {
+		if (args.length != 2) {
 			usage();
 			return;
 		}
@@ -37,39 +40,22 @@ public class GroovyShellClient {
 		int port = 0;
 		try {
 			port = Integer.parseInt(args[1]);
-		} catch ( NumberFormatException e ) {
+		} catch (NumberFormatException e) {
 			System.out.println("Invalid port given: " + args[1]);
 		}
 
-		SocketChannel channel;
-		channel = SocketChannel.open(new InetSocketAddress(host, port));
+		SocketChannel channel = SocketChannel.open(new InetSocketAddress(host, port));
 
-		Thread thread = new Thread(new ReadTask(channel));
-		thread.setDaemon(true);
+		Thread socketThread = new Thread(new ReadTask(channel));
+		socketThread.setDaemon(true);
+		socketThread.start();
 
-		thread.start();
+		Thread consoleThread = new Thread(new ReadConsoleTask(channel, System.out));
+		//consoleThread.setDaemon(true);
+		consoleThread.start();
 
-		try {
-			ConsoleReader in = new ConsoleReader();
-			PrintStream out = System.out;
-
-			int i;
-			ByteBuffer buffer = ByteBuffer.allocate(2);
-			while ( (i = in.readVirtualKey()) >= 0 ) {
-				//System.out.print("["+i+"|"+(i&0xff)+"]");
-				buffer.clear();
-				buffer.putChar((char) i);
-				buffer.flip();
-				channel.write(buffer);
-			}
-			out.println();
-		} catch ( IOException e ) {
-			throw new RuntimeException(e);
-		} finally {
-			channel.close();
-			thread.interrupt();
-			thread.join();
-		}
+		socketThread.join();
+		channel.close();
 	}
 
 	private static void usage() {
@@ -91,24 +77,50 @@ class ReadTask implements Runnable {
 	public void run() {
 		ByteBuffer buffer = ByteBuffer.allocate(1024);
 		try {
-			while ( channel.read(buffer) != 0 ) {
-				if ( Thread.currentThread().isInterrupted() ) {
-					return;
-				}
+			while (channel.read(buffer) != 0 && !currentThread().isInterrupted()) {
 				buffer.flip();
-				while ( buffer.hasRemaining() ) {
+				while (buffer.hasRemaining()) {
 					byte first = buffer.get();
-					if ( (first & 0xE0) == 0xC0 ) {
+					if ((first & 0xE0) == 0xC0) {
 						byte second = buffer.get();
-						System.out.print(new String(new byte[] {first, second}, "UTF-8"));
-					}else{
+						System.out.print(new String(new byte[]{first, second}, "UTF-8"));
+					} else {
 						System.out.print((char) first);
 					}
 				}
 				buffer.clear();
 			}
-			channel.close();
-		} catch ( IOException e ) {
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+}
+
+class ReadConsoleTask implements Runnable {
+
+	private final WritableByteChannel channel;
+	private final PrintStream out;
+
+	public ReadConsoleTask(WritableByteChannel channel, PrintStream out) {
+		this.channel = channel;
+		this.out = out;
+	}
+
+	@Override
+	public void run() {
+		try {
+			ConsoleReader in = new ConsoleReader();
+
+			int i;
+			ByteBuffer buffer = ByteBuffer.allocate(2);
+			while ((i = in.readVirtualKey()) >= 0 && channel.isOpen()) {
+				buffer.clear();
+				buffer.putChar((char) i);
+				buffer.flip();
+				channel.write(buffer);
+			}
+			out.println();
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
