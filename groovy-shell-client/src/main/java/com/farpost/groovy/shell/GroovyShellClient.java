@@ -54,11 +54,10 @@ public class GroovyShellClient {
 		SocketChannel channel = SocketChannel.open(new InetSocketAddress(host, port));
 
 		Thread socketThread = new Thread(new ReadSocketTask(channel));
-		socketThread.setDaemon(true);
 		socketThread.start();
 
 		Thread consoleThread = new Thread(new ReadConsoleTask(channel, System.out));
-		//consoleThread.setDaemon(true);
+		consoleThread.setDaemon(true);
 		consoleThread.start();
 
 		socketThread.join();
@@ -96,7 +95,7 @@ class ReadSocketTask implements Runnable {
 	public void run() {
 		ByteBuffer buffer = ByteBuffer.allocate(1024);
 		try {
-			while (channel.read(buffer) != 0 && !currentThread().isInterrupted()) {
+			while (channel.read(buffer) != -1 && !currentThread().isInterrupted()) {
 				buffer.flip();
 				while (buffer.hasRemaining()) {
 					byte first = buffer.get();
