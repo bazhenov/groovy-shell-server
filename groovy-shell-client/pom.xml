@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
-<project>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+				 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+				 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<packaging>jar</packaging>
-	<groupId>com.farpost.groovy-shell</groupId>
 	<artifactId>groovy-shell-client</artifactId>
 	<name>Groovy Shell Client</name>
-	<version>1.1</version>
 	<parent>
 		<groupId>com.farpost.groovy-shell</groupId>
 		<artifactId>groovy-shell-parent</artifactId>
