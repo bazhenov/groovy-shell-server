@@ -27,7 +27,6 @@ import java.util.Map;
 public class GroovyShellService {
 
 	private int port = 6789;
-	private boolean launchAtStart = true;
 
 	private Map<String, Object> bindings;
 	private Thread acceptorThread;
@@ -40,16 +39,10 @@ public class GroovyShellService {
 		this.port = port;
 	}
 
-	public void setLaunchAtStart(boolean launchAtStart) {
-		this.launchAtStart = launchAtStart;
-	}
-
 	public void start() throws IOException {
-		if (launchAtStart) {
-			Runnable acceptor = new GroovyShellAcceptor(port, createBinding(bindings));
-			acceptorThread = new Thread(acceptor, "Groovy shell acceptor thread");
-			acceptorThread.start();
-		}
+		Runnable acceptor = new GroovyShellAcceptor(port, createBinding(bindings));
+		acceptorThread = new Thread(acceptor, "Groovy shell acceptor thread");
+		acceptorThread.start();
 	}
 
 	public void destroy() throws InterruptedException {
