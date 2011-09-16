@@ -26,27 +26,34 @@ import java.nio.channels.WritableByteChannel;
 
 import static java.lang.Thread.currentThread;
 
-/**
- * @author Denis Bazhenov
- */
+ /**
+  * Client which can connect to a server socket provided by com.iterative.groovy.service.GroovyShellService.
+  * To use from the command line, provide <code>host</code> and <code>port</code> as arguments.  For example:
+  * 
+  * <pre>
+  * java -cp "groovy-shell-client-1.1.jar;jline-0.9.94.jar" com.farpost.groovy.shell.GroovyShellClient localhost 6789
+  * </pre>
+  * 
+  * @author Denis Bazhenov
+  *
+  */
 public class GroovyShellClient {
 
-	public static void main(String[] args) throws InterruptedException, IOException {
-		if (args.length != 2) {
-			usage();
-			return;
-		}
-		String host = args[0];
-		int port = 0;
-		try {
-			port = Integer.parseInt(args[1]);
-		} catch (NumberFormatException e) {
-			System.out.println("Invalid port given: " + args[1]);
-		}
-
+	protected String host;
+	protected int port;
+	
+	public GroovyShellClient(String host, int port) {
+		this.host = host;
+		this.port = port;
+	}
+	
+	/**
+	 * Runs the client, exiting when either the client input stream or server output stream is closed.
+	 */
+	public void run() throws IOException, InterruptedException {
 		SocketChannel channel = SocketChannel.open(new InetSocketAddress(host, port));
 
-		Thread socketThread = new Thread(new ReadTask(channel));
+		Thread socketThread = new Thread(new ReadSocketTask(channel));
 		socketThread.setDaemon(true);
 		socketThread.start();
 
@@ -58,19 +65,31 @@ public class GroovyShellClient {
 		channel.close();
 	}
 
-	private static void usage() {
-		System.out.println("Usage: remote-groovysh host port");
+	public static void main(String[] args) throws InterruptedException, IOException {
+		if (args.length != 2) {
+			System.out.println("Usage: java com.farpost.groovy.shell.GroovyShellClient host port");
+			System.exit(1);
+		}
+		String host = args[0];
+		int port = 0;
+		try {
+			port = Integer.parseInt(args[1]);
+		} catch (NumberFormatException e) {
+			System.out.println("Invalid port given: " + args[1]);
+			System.exit(1);
+		}
+		new GroovyShellClient(host, port).run();
 	}
 }
 
 /**
  * @author Denis Bazhenov
  */
-class ReadTask implements Runnable {
+class ReadSocketTask implements Runnable {
 
 	private final SocketChannel channel;
 
-	public ReadTask(SocketChannel channel) {
+	public ReadSocketTask(SocketChannel channel) {
 		this.channel = channel;
 	}
 
@@ -124,4 +143,5 @@ class ReadConsoleTask implements Runnable {
 			throw new RuntimeException(e);
 		}
 	}
+
 }
