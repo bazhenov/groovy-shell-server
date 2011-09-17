@@ -86,3 +86,11 @@ In order to simple run applications you can use `maven-exec` plugin:
 and
 
 	mvn -f groovy-shell-client/pom.xml exec:java -Dexec.mainClass=com.farpost.groovy.shell.GroovyShellClient -Dexec.args="localhost 6789"
+
+Management
+----------
+
+What if a well-meaning developer fires up a remote shell and accidentally executes a script which hammers the server?  Fortunately, 
+each GroovyShellService instance registers itself with the default MBeanServer and provides a "killAllClients" operation to kill
+any open client sockets and stop the associated client threads.  Thus you can connect with jconsole or your favorite JMX frontend
+to resolve this issue if it arises.
