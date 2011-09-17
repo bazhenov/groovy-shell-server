@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -33,37 +34,44 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class GroovyShellAcceptor implements Runnable {
 
-	private final ServerSocket serverSocket;
 	private static final Logger log = getLogger(GroovyShellAcceptor.class);
+
+	private final ServerSocket serverSocket;
 	private final Binding binding;
+	private List<ClientTaskThread> clientThreads = new LinkedList<ClientTaskThread>();
 
 	public GroovyShellAcceptor(int port, Binding binding) throws IOException {
 		if (port <= 0) {
 			throw new IllegalArgumentException("Port number should be positive integer");
 		}
 		serverSocket = new ServerSocket(port);
+		serverSocket.setSoTimeout(1000);
 		this.binding = binding;
 	}
 
+	private static int clientSequence = 0;
 
 	@Override
 	public void run() {
-		List<Thread> threads = new LinkedList<Thread>();
 		try {
 			log.info("Groovy shell started on {}", serverSocket);
 
-			Thread self = currentThread();
-			while (!self.isInterrupted()) {
+			while (!currentThread().isInterrupted()) {
 				try {
 					Socket clientSocket = serverSocket.accept();
 					log.debug("Groovy shell client accepted: {}", clientSocket);
 
-					Thread clientThread = new Thread(new ClientTask(clientSocket, binding));
-					threads.add(clientThread);
+					synchronized(this) {
+						ClientTaskThread clientThread = new ClientTaskThread(new ClientTask(clientSocket, binding), "GroovyShClient-" + clientSequence++);
+						clientThreads.add(clientThread);
 
-					clientThread.start();
-
-					log.debug("Groovy shell thread started: {}", clientThread.getName());
+						clientThread.start();
+						
+						log.debug("Groovy shell thread started: {}", clientThread.getName());
+					}
+				} catch (SocketTimeoutException e) {
+					// Didn't receive a client connection within the SoTimeout interval ... continue with another
+					// accept call if the thread wasn't interrupted
 				} catch (SocketException e) {
 					log.error("Stopping groovy shell thread", e);
 					break;
@@ -74,15 +82,19 @@ public class GroovyShellAcceptor implements Runnable {
 			log.error("Error in shell dispatcher thread. Stopping thread", e);
 
 		} finally {
+			killAllClients();
 			closeQuietly(serverSocket);
-			for (Thread clientThread : threads) {
-				clientThread.interrupt();
-			}
-
 			log.info("Groovy shell stopped");
 		}
 	}
 
+	public synchronized void killAllClients() {
+		for (ClientTaskThread thread : clientThreads) {
+			thread.kill();
+		}
+		clientThreads.clear();
+	}
+	
 	private static void closeQuietly(ServerSocket socket) {
 		try {
 			socket.close();
