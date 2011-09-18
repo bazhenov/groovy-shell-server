@@ -15,8 +15,9 @@
  */
 package com.iterative.groovy.service;
 
+import static java.lang.Thread.currentThread;
+import static org.slf4j.LoggerFactory.getLogger;
 import groovy.lang.Binding;
-import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -26,8 +27,7 @@ import java.net.SocketTimeoutException;
 import java.util.LinkedList;
 import java.util.List;
 
-import static java.lang.Thread.currentThread;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.slf4j.Logger;
 
 /**
  * @author Denis Bazhenov
@@ -39,14 +39,16 @@ public class GroovyShellAcceptor implements Runnable {
 	private final ServerSocket serverSocket;
 	private final Binding binding;
 	private List<ClientTaskThread> clientThreads = new LinkedList<ClientTaskThread>();
+	private List<String> defaultScripts;
 
-	public GroovyShellAcceptor(int port, Binding binding) throws IOException {
+	public GroovyShellAcceptor(int port, Binding binding, List<String> defaultScripts) throws IOException {
 		if (port <= 0) {
 			throw new IllegalArgumentException("Port number should be positive integer");
 		}
 		serverSocket = new ServerSocket(port);
 		serverSocket.setSoTimeout(1000);
 		this.binding = binding;
+		this.defaultScripts = defaultScripts;
 	}
 
 	private static int clientSequence = 0;
@@ -62,7 +64,8 @@ public class GroovyShellAcceptor implements Runnable {
 					log.debug("Groovy shell client accepted: {}", clientSocket);
 
 					synchronized(this) {
-						ClientTaskThread clientThread = new ClientTaskThread(new ClientTask(clientSocket, binding), "GroovyShClient-" + clientSequence++);
+						ClientTask clientTask = new ClientTask(clientSocket, binding, defaultScripts);
+						ClientTaskThread clientThread = new ClientTaskThread(clientTask, "GroovyShClient-" + clientSequence++);
 						clientThreads.add(clientThread);
 
 						clientThread.start();

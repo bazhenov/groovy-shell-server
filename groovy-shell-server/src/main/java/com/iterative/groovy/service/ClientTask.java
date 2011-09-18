@@ -24,7 +24,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.Socket;
+import java.util.Arrays;
+import java.util.List;
 
+import org.codehaus.groovy.tools.shell.Command;
 import org.codehaus.groovy.tools.shell.ExitNotification;
 import org.codehaus.groovy.tools.shell.Groovysh;
 import org.codehaus.groovy.tools.shell.IO;
@@ -37,11 +40,13 @@ public class ClientTask implements Runnable {
 
 	private final Socket socket;
 	private final Binding binding;
+	private List<String> defaultScripts;
 	private final static Logger log = getLogger(ClientTask.class);
 
-	public ClientTask(Socket socket, Binding binding) {
+	public ClientTask(Socket socket, Binding binding, List<String> defaultScripts) {
 		this.socket = socket;
 		this.binding = binding;
+		this.defaultScripts = defaultScripts;
 	}
 
 	@Override
@@ -57,6 +62,8 @@ public class ClientTask implements Runnable {
 
 			IO io = new IO(in, out, out);
 			Groovysh shell = new Groovysh(binding, io);
+
+			loadDefaultScripts(shell);
 
 			final Closure<Groovysh> defaultErrorHook = shell.getErrorHook();
 			shell.setErrorHook(new Closure<Groovysh>(this) {
@@ -86,6 +93,27 @@ public class ClientTask implements Runnable {
 		}
 	}
 
+	@SuppressWarnings({"unchecked", "serial"})
+	private void loadDefaultScripts(final Groovysh shell) {
+		if (defaultScripts.size() > 0) {
+			Closure<Groovysh> defaultResultHook = shell.getResultHook();
+			
+			// Set a "no-op closure so we don't get per-line value output when evaluating the default script
+			shell.setResultHook(new Closure<Groovysh>(this) {
+				@Override
+				public Groovysh call(Object... args) {
+					return shell;
+				}
+			});
+			
+			Command cmd = shell.getRegistry().find("load");
+			for (String script : defaultScripts) {
+				cmd.execute(Arrays.asList(script));
+			}
+			shell.setResultHook(defaultResultHook);
+		}
+	}
+	
 	public void closeSocket() {
 		closeQuietly(socket);
 	}

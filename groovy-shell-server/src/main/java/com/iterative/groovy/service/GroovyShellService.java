@@ -20,6 +20,8 @@ import groovy.lang.Binding;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import javax.management.JMException;
@@ -48,6 +50,8 @@ public class GroovyShellService implements GroovyShellServiceMBean {
 	protected GroovyShellAcceptor groovyShellAcceptor;
 	protected Thread acceptorThread;
 
+	protected List<String> defaultScripts = new ArrayList<String>();
+	
 	/**
 	 * Uses a default port of 6789
 	 */
@@ -75,6 +79,20 @@ public class GroovyShellService implements GroovyShellServiceMBean {
 		return port;
 	}
 
+	/**
+	 * Adds a groovy script to be executed for each new client session.
+	 */
+	public void addDefaultScript(String script) {
+		defaultScripts.add(script);
+	}
+
+	/**
+	 * @return complete List of scripts to be executed for each new client session
+	 */
+	public List<String> getDefaultScripts() {
+		return defaultScripts;
+	}
+
 	public void setPort(final int port) {
 		this.port = port;
 	}
@@ -92,7 +110,7 @@ public class GroovyShellService implements GroovyShellServiceMBean {
 			log.warn("Failed to register GroovyShellService MBean", e);
 		}
 
-		groovyShellAcceptor = new GroovyShellAcceptor(port, createBinding(bindings));
+		groovyShellAcceptor = new GroovyShellAcceptor(port, createBinding(bindings), defaultScripts);
 		acceptorThread = new Thread(groovyShellAcceptor, "GroovyShAcceptor-" + port);
 		acceptorThread.start();
 	}
