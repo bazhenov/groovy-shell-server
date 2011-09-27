@@ -15,9 +15,8 @@
  */
 package com.iterative.groovy.service;
 
-import static java.lang.Thread.currentThread;
-import static org.slf4j.LoggerFactory.getLogger;
 import groovy.lang.Binding;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -27,7 +26,8 @@ import java.net.SocketTimeoutException;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.slf4j.Logger;
+import static java.lang.Thread.currentThread;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author Denis Bazhenov
@@ -41,6 +41,8 @@ public class GroovyShellAcceptor implements Runnable {
 	private List<ClientTaskThread> clientThreads = new LinkedList<ClientTaskThread>();
 	private List<String> defaultScripts;
 
+	private static int clientSequence = 0;
+
 	public GroovyShellAcceptor(int port, Binding binding, List<String> defaultScripts) throws IOException {
 		if (port <= 0) {
 			throw new IllegalArgumentException("Port number should be positive integer");
@@ -50,8 +52,6 @@ public class GroovyShellAcceptor implements Runnable {
 		this.binding = binding;
 		this.defaultScripts = defaultScripts;
 	}
-
-	private static int clientSequence = 0;
 
 	@Override
 	public void run() {
@@ -63,13 +63,13 @@ public class GroovyShellAcceptor implements Runnable {
 					Socket clientSocket = serverSocket.accept();
 					log.debug("Groovy shell client accepted: {}", clientSocket);
 
-					synchronized(this) {
+					synchronized (this) {
 						ClientTask clientTask = new ClientTask(clientSocket, binding, defaultScripts);
 						ClientTaskThread clientThread = new ClientTaskThread(clientTask, "GroovyShClient-" + clientSequence++);
 						clientThreads.add(clientThread);
 
 						clientThread.start();
-						
+
 						log.debug("Groovy shell thread started: {}", clientThread.getName());
 					}
 				} catch (SocketTimeoutException e) {
@@ -97,7 +97,7 @@ public class GroovyShellAcceptor implements Runnable {
 		}
 		clientThreads.clear();
 	}
-	
+
 	private static void closeQuietly(ServerSocket socket) {
 		try {
 			socket.close();

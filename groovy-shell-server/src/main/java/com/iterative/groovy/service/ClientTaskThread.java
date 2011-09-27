@@ -1,15 +1,16 @@
 package com.iterative.groovy.service;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import org.slf4j.Logger;
+
+import static java.lang.Thread.currentThread;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class ClientTaskThread extends Thread {
 
 	private static final Logger log = getLogger(ClientTaskThread.class);
 
 	private ClientTask clientTask;
-	
+
 	public ClientTaskThread(ClientTask runnable, String threadName) {
 		super(runnable, threadName);
 		this.clientTask = runnable;
@@ -19,11 +20,11 @@ public class ClientTaskThread extends Thread {
 	public void kill() {
 		interrupt();
 		clientTask.closeSocket();
-		try { 
+		try {
 			join(500);
-		}
-		catch (InterruptedException e)  {
-			// no-op
+		} catch (InterruptedException e) {
+			// Restore interrupt thread flag
+			currentThread().interrupt();
 		}
 
 		if (isAlive()) {

@@ -15,6 +15,7 @@
  */
 package com.iterative.groovy.service;
 
+import static java.util.Arrays.asList;
 import static org.slf4j.LoggerFactory.getLogger;
 import groovy.lang.Binding;
 import groovy.lang.Closure;
@@ -63,7 +64,13 @@ public class ClientTask implements Runnable {
 			IO io = new IO(in, out, out);
 			Groovysh shell = new Groovysh(binding, io);
 
-			loadDefaultScripts(shell);
+			Exception cause = null;
+			try {
+				loadDefaultScripts(shell);
+			} catch (Exception e) {
+				log.error("Error while loading default script", e);
+				cause = e;
+			}
 
 			final Closure<Groovysh> defaultErrorHook = shell.getErrorHook();
 			shell.setErrorHook(new Closure<Groovysh>(this) {
@@ -78,6 +85,9 @@ public class ClientTask implements Runnable {
 			});
 
 			try {
+				if (cause != null) {
+					out.println("Unable to load default script: " + cause);
+				}
 				shell.run();
 			} catch (Exception e) {
 				log.error("Error while executing client command", e);
@@ -95,9 +105,9 @@ public class ClientTask implements Runnable {
 
 	@SuppressWarnings({"unchecked", "serial"})
 	private void loadDefaultScripts(final Groovysh shell) {
-		if (defaultScripts.size() > 0) {
+		if (!defaultScripts.isEmpty()) {
 			Closure<Groovysh> defaultResultHook = shell.getResultHook();
-			
+
 			// Set a "no-op closure so we don't get per-line value output when evaluating the default script
 			shell.setResultHook(new Closure<Groovysh>(this) {
 				@Override
@@ -105,15 +115,15 @@ public class ClientTask implements Runnable {
 					return shell;
 				}
 			});
-			
+
 			Command cmd = shell.getRegistry().find("load");
 			for (String script : defaultScripts) {
-				cmd.execute(Arrays.asList(script));
+				cmd.execute(asList(script));
 			}
 			shell.setResultHook(defaultResultHook);
 		}
 	}
-	
+
 	public void closeSocket() {
 		closeQuietly(socket);
 	}
