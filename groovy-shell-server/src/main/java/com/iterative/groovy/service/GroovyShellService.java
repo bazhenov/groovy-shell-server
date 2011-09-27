@@ -15,47 +15,119 @@
  */
 package com.iterative.groovy.service;
 
+import static org.slf4j.LoggerFactory.getLogger;
 import groovy.lang.Binding;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
+import javax.management.JMException;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+
+import org.slf4j.Logger;
+
 /**
+ * Instantiate this class and call {@link #start()} to create a GroovyShell server socket
+ * which can accept client connections and initiate groovysh sessions.
+ * 
+ * <p/>Each instance of this class will register itself with the default MBean server
+ * to allow for management of {@link GroovyShellServiceMBean} methods via a JMX agent.
+ * 
  * @author Bruce Fancher
  * @author Denis Bazhenov
  */
-public class GroovyShellService {
+public class GroovyShellService implements GroovyShellServiceMBean {
 
-	private int port = 6789;
-	private boolean launchAtStart = true;
+	private static final Logger log = getLogger(GroovyShellService.class);
 
-	private Map<String, Object> bindings;
-	private Thread acceptorThread;
+	protected int port;
+	protected Map<String, Object> bindings;
+
+	protected GroovyShellAcceptor groovyShellAcceptor;
+	protected Thread acceptorThread;
+
+	protected List<String> defaultScripts = new ArrayList<String>();
+	
+	/**
+	 * Uses a default port of 6789
+	 */
+	public GroovyShellService() {
+		this(6789);
+	}
+
+	public GroovyShellService(int port) {
+		this.port = port;
+	}
+	
+	protected ObjectName getJMXObjectName() throws MalformedObjectNameException {
+		return new ObjectName(getClass().getName() + ":port=" + port);
+	}
+	
+	public Map<String, Object> getBindings() {
+		return bindings;
+	}
 
 	public void setBindings(Map<String, Object> bindings) {
 		this.bindings = bindings;
+	}
+
+	public int getPort() {
+		return port;
+	}
+
+	/**
+	 * Adds a groovy script to be executed for each new client session.
+	 */
+	public void addDefaultScript(String script) {
+		defaultScripts.add(script);
+	}
+
+	/**
+	 * @return complete List of scripts to be executed for each new client session
+	 */
+	public List<String> getDefaultScripts() {
+		return defaultScripts;
 	}
 
 	public void setPort(final int port) {
 		this.port = port;
 	}
 
-	public void setLaunchAtStart(boolean launchAtStart) {
-		this.launchAtStart = launchAtStart;
-	}
-
+	/**
+	 * Opens a server socket and starts a new Thread to accept client connections.
+	 * 
+	 * @throws IOException thrown if socket cannot be opened
+	 */
 	public void start() throws IOException {
-		if (launchAtStart) {
-			Runnable acceptor = new GroovyShellAcceptor(port, createBinding(bindings));
-			acceptorThread = new Thread(acceptor, "Groovy shell acceptor thread");
-			acceptorThread.start();
+		try {
+			ManagementFactory.getPlatformMBeanServer().registerMBean(this, getJMXObjectName());
 		}
+		catch (JMException e) {
+			log.warn("Failed to register GroovyShellService MBean", e);
+		}
+
+		groovyShellAcceptor = new GroovyShellAcceptor(port, createBinding(bindings), defaultScripts);
+		acceptorThread = new Thread(groovyShellAcceptor, "GroovyShAcceptor-" + port);
+		acceptorThread.start();
 	}
 
 	public void destroy() throws InterruptedException {
 		if (acceptorThread != null) {
 			acceptorThread.interrupt();
 			acceptorThread.join();
+
+			try {
+				ManagementFactory.getPlatformMBeanServer().unregisterMBean(getJMXObjectName());
+			}
+			catch (JMException e) {
+				log.warn("Failed to unregister GroovyShellService MBean", e);
+			}
+
+			acceptorThread = null;
 		}
 	}
 
@@ -69,5 +141,10 @@ public class GroovyShellService {
 		}
 
 		return binding;
+	}
+
+	@Override
+	public void killAllClients() {
+		groovyShellAcceptor.killAllClients();
 	}
 }
