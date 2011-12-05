@@ -15,34 +15,34 @@
  */
 package com.iterative.groovy.service;
 
-import static java.util.Arrays.asList;
-import static org.slf4j.LoggerFactory.getLogger;
 import groovy.lang.Binding;
 import groovy.lang.Closure;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.net.Socket;
-import java.util.Arrays;
-import java.util.List;
-
 import org.codehaus.groovy.tools.shell.Command;
 import org.codehaus.groovy.tools.shell.ExitNotification;
 import org.codehaus.groovy.tools.shell.Groovysh;
 import org.codehaus.groovy.tools.shell.IO;
 import org.slf4j.Logger;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.net.Socket;
+import java.util.List;
+
+import static java.util.Arrays.asList;
+import static org.slf4j.LoggerFactory.getLogger;
+
 /**
  * @author Denis Bazhenov
  */
 public class ClientTask implements Runnable {
 
+	private final static Logger log = getLogger(ClientTask.class);
+
 	private final Socket socket;
 	private final Binding binding;
-	private List<String> defaultScripts;
-	private final static Logger log = getLogger(ClientTask.class);
+	private final List<String> defaultScripts;
 
 	public ClientTask(Socket socket, Binding binding, List<String> defaultScripts) {
 		this.socket = socket;
@@ -108,19 +108,23 @@ public class ClientTask implements Runnable {
 		if (!defaultScripts.isEmpty()) {
 			Closure<Groovysh> defaultResultHook = shell.getResultHook();
 
-			// Set a "no-op closure so we don't get per-line value output when evaluating the default script
-			shell.setResultHook(new Closure<Groovysh>(this) {
-				@Override
-				public Groovysh call(Object... args) {
-					return shell;
-				}
-			});
+			try {
+				// Set a "no-op closure so we don't get per-line value output when evaluating the default script
+				shell.setResultHook(new Closure<Groovysh>(this) {
+					@Override
+					public Groovysh call(Object... args) {
+						return shell;
+					}
+				});
 
-			Command cmd = shell.getRegistry().find("load");
-			for (String script : defaultScripts) {
-				cmd.execute(asList(script));
+				Command cmd = shell.getRegistry().find("load");
+				for (String script : defaultScripts) {
+					cmd.execute(asList(script));
+				}
+			} finally {
+				// Restoring original result hook
+				shell.setResultHook(defaultResultHook);
 			}
-			shell.setResultHook(defaultResultHook);
 		}
 	}
 

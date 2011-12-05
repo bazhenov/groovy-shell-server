@@ -27,6 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static java.lang.Thread.currentThread;
+import static java.lang.Thread.yield;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -75,6 +76,7 @@ public class GroovyShellAcceptor implements Runnable {
 				} catch (SocketTimeoutException e) {
 					// Didn't receive a client connection within the SoTimeout interval ... continue with another
 					// accept call if the thread wasn't interrupted
+					yield();
 				} catch (SocketException e) {
 					log.error("Stopping groovy shell thread", e);
 					break;
