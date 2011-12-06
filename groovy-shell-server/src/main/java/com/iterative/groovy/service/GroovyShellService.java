@@ -93,7 +93,7 @@ public class GroovyShellService implements GroovyShellServiceMBean {
 	 *
 	 * @param scriptNames script names
 	 */
-	public void setDefaultScripts(String scriptNames) {
+	public void setDefaultScriptNames(String scriptNames) {
 		defaultScripts = asList(scriptNames.split(","));
 	}
 
