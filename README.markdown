@@ -16,8 +16,13 @@ Groovy shell server uses `groovysh` API inside, so all features of `groovysh` (a
 Installation
 ------------
 
-Just drop all distributed jar files in your application classpath. In the moment it's the only option. In a future you
-will be able to use it as a regular maven dependency.
+Just include following dependency in your `pom.xml`:
+
+	<dependency>
+		<groupId>me.bazhenov.groovy-shell</groupId>
+		<artifactId>groovy-shell-server</artifactId>
+		<version>1.2</version>
+	</dependency>
 
 Using
 -----
