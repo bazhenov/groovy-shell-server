@@ -56,8 +56,8 @@ public class ClientTask implements Runnable {
 		PrintStream out = null;
 		InputStream in = null;
 		try {
-			out = new PrintStream(socket.getOutputStream());
-			in = new UtfInputStream(socket.getInputStream());
+			out = new PrintStream(socket.getOutputStream(), true, "utf8");
+			in = socket.getInputStream();
 
 			binding.setVariable("out", out);
 

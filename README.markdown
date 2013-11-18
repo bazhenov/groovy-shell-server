@@ -21,7 +21,7 @@ Just include following dependency in your `pom.xml`:
 	<dependency>
 		<groupId>me.bazhenov.groovy-shell</groupId>
 		<artifactId>groovy-shell-server</artifactId>
-		<version>1.2</version>
+		<version>1.3</version>
 	</dependency>
 
 Using
@@ -35,26 +35,18 @@ In your application you should start `GroovyShellService`:
 		put("foo", obj1);
 		put("bar", obj2);
 	}});
-								
+
 	service.start();
 
 And destroy it on application exit:
 
 	service.destroy();
 
-Groovy shell server use custom client for connect to a server. After you download a package, you should unpack it
-and it's ready to go:
+Groovy shell server use `socat` as a client. So connecting to a groovy shell server as simple as:
 
-	$ tar xvf groovy-shell-client-1.0.tar.gz 
-	x groovy-shell-client-1.0/lib/slf4j-api-1.6.1.jar
-	x groovy-shell-client-1.0/lib/jline-0.9.94.jar
-	x groovy-shell-client-1.0/lib/logback-classic-0.9.25.jar
-	x groovy-shell-client-1.0/lib/logback-core-0.9.25.jar
-	x groovy-shell-client-1.0/lib/groovy-shell-client-1.0.jar
-	x groovy-shell-client-1.0/bin/remote-groovysh
-	$ ./groovy-shell-client-1.0/bin/remote-groovysh localhost 6789
-	Groovy Shell (1.5.6, JVM: 19.1-b02-334)
-	Type 'help' or '\h' for help.
+  $ socat -,raw,echo=0,opost TCP:127.0.0.1:6789
+	Groovy Shell (2.1.9, JVM: 1.6.0_65)
+  Type 'help' or '\h' for help.
 	-------------------------------------------------------------------------------
 	groovy:000> (1..10).each { println "Kill all humans!" }
 	Kill all humans!
@@ -70,17 +62,22 @@ and it's ready to go:
 	===> 1..10
 	groovy:000>
 
+You can make alias for simplify your life:
+
+  $ alias groovy-shell='socat -,raw,echo=0,opost'
+  $ groovy-shell TCP:127.0.0.1:6789
+  Groovy Shell (2.1.9, JVM: 1.6.0_65)
+  Type 'help' or '\h' for help.
+  -------------------------------------------------------------------------------
+	groovy:000>
+
 Build
 -----
 Use `maven-assembly` plugin to build and create archive of `groovy-shell-server`:
 
-	mvn -f groovy-shell-server/pom.xml assembly:assembly
+	mvn package
 
-and `groovy-shell-client`:
-
-	mvn -f groovy-shell-client/pom.xml assembly:assembly
-
-Archives will be placed in `groovy-shell-server/target/` and `groovy-shell-client/target/` respectively.
+Archives will be placed in `groovy-shell-server/target/`.
 
 ### Simple run
 
@@ -88,14 +85,10 @@ In order to simple run applications you can use `maven-exec` plugin:
 
 	mvn -f groovy-shell-server/pom.xml exec:java -Dexec.mainClass=com.iterative.groovy.service.Main
 
-and
-
-	mvn -f groovy-shell-client/pom.xml exec:java -Dexec.mainClass=com.farpost.groovy.shell.GroovyShellClient -Dexec.args="localhost 6789"
-
 Management
 ----------
 
-What if a well-meaning developer fires up a remote shell and accidentally executes a script which hammers the server?  Fortunately, 
+What if a well-meaning developer fires up a remote shell and accidentally executes a script which hammers the server?  Fortunately,
 each GroovyShellService instance registers itself with the default MBeanServer and provides a "killAllClients" operation to kill
 any open client sockets and stop the associated client threads.  Thus you can connect with jconsole or your favorite JMX frontend
 to resolve this issue if it arises.
