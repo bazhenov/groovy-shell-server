@@ -44,9 +44,9 @@ And destroy it on application exit:
 
 Groovy shell server use `socat` as a client. So connecting to a groovy shell server as simple as:
 
-  $ socat -,raw,echo=0,opost TCP:127.0.0.1:6789
+	$ socat -,raw,echo=0,opost TCP:127.0.0.1:6789
 	Groovy Shell (2.1.9, JVM: 1.6.0_65)
-  Type 'help' or '\h' for help.
+	Type 'help' or '\h' for help.
 	-------------------------------------------------------------------------------
 	groovy:000> (1..10).each { println "Kill all humans!" }
 	Kill all humans!
@@ -64,11 +64,11 @@ Groovy shell server use `socat` as a client. So connecting to a groovy shell ser
 
 You can make alias for simplify your life:
 
-  $ alias groovy-shell='socat -,raw,echo=0,opost'
-  $ groovy-shell TCP:127.0.0.1:6789
-  Groovy Shell (2.1.9, JVM: 1.6.0_65)
-  Type 'help' or '\h' for help.
-  -------------------------------------------------------------------------------
+	$ alias groovy-shell='socat -,raw,echo=0,opost'
+	$ groovy-shell TCP:127.0.0.1:6789
+	Groovy Shell (2.1.9, JVM: 1.6.0_65)
+	Type 'help' or '\h' for help.
+	-------------------------------------------------------------------------------
 	groovy:000>
 
 Build
@@ -88,7 +88,7 @@ In order to simple run applications you can use `maven-exec` plugin:
 Management
 ----------
 
-What if a well-meaning developer fires up a remote shell and accidentally executes a script which hammers the server?  Fortunately,
+What if a well-meaning developer fires up a remote shell and accidentally executes a script which hammers the server?	Fortunately,
 each GroovyShellService instance registers itself with the default MBeanServer and provides a "killAllClients" operation to kill
-any open client sockets and stop the associated client threads.  Thus you can connect with jconsole or your favorite JMX frontend
+any open client sockets and stop the associated client threads. Thus you can connect with jconsole or your favorite JMX frontend
 to resolve this issue if it arises.
