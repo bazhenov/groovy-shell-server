@@ -23,8 +23,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.util.LinkedList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 import static java.lang.Thread.currentThread;
 import static java.lang.Thread.yield;
@@ -39,7 +41,8 @@ public class GroovyShellAcceptor implements Runnable {
 
 	private final ServerSocket serverSocket;
 	private final Binding binding;
-	private List<ClientTaskThread> clientThreads = new LinkedList<ClientTaskThread>();
+	private Set<ClientTaskThread> clientThreads = Collections
+			.newSetFromMap(new WeakHashMap<ClientTaskThread, Boolean>());
 	private List<String> defaultScripts;
 
 	private static int clientSequence = 0;
@@ -66,7 +69,8 @@ public class GroovyShellAcceptor implements Runnable {
 
 					synchronized (this) {
 						ClientTask clientTask = new ClientTask(clientSocket, binding, defaultScripts);
-						ClientTaskThread clientThread = new ClientTaskThread(clientTask, "GroovyShClient-" + clientSequence++);
+						ClientTaskThread clientThread = new ClientTaskThread(clientTask, "GroovyShClient-"
+								+ clientSequence++);
 						clientThreads.add(clientThread);
 
 						clientThread.start();
@@ -74,7 +78,8 @@ public class GroovyShellAcceptor implements Runnable {
 						log.debug("Groovy shell thread started: {}", clientThread.getName());
 					}
 				} catch (SocketTimeoutException e) {
-					// Didn't receive a client connection within the SoTimeout interval ... continue with another
+					// Didn't receive a client connection within the SoTimeout
+					// interval ... continue with another
 					// accept call if the thread wasn't interrupted
 					yield();
 				} catch (SocketException e) {
