@@ -62,7 +62,7 @@ Groovy shell server use `socat` as a client. So connecting to a groovy shell ser
 	===> 1..10
 	groovy:000>
 
-You can make alias for simplify your life:
+You can make alias to simplify your life:
 
 	$ alias groovy-shell='socat -,raw,echo=0,opost'
 	$ groovy-shell TCP:127.0.0.1:6789
@@ -70,6 +70,22 @@ You can make alias for simplify your life:
 	Type 'help' or '\h' for help.
 	-------------------------------------------------------------------------------
 	groovy:000>
+
+Integrating with Spring
+-----------------------
+You can easily integrate Groovy Shell with Spring container:
+
+	<bean class="com.iterative.groovy.service.spring.GroovyShellServiceBean"
+		p:port="6789"
+		p:lauchAtStart="true"
+		p:bindings-ref="bindings"/>
+
+	<u:map id="bindings">
+		<entry key="foo" value="bar"/>
+	</u:map>
+
+When using `GroovyShellServiceBean` reference to the `ApplicationContext` is added to bindings implicitly, so in shell you can get objects
+from container by id or type (e.g. `ctx.getBean('id')`).
 
 Build
 -----
