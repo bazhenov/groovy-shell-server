@@ -1,6 +1,6 @@
-package com.iterative.groovy.service.spring;
+package me.bazhenov.groovysh.spring;
 
-import com.iterative.groovy.service.GroovyShellService;
+import me.bazhenov.groovysh.GroovyShellService;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;

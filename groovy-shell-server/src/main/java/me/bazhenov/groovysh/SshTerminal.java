@@ -1,4 +1,4 @@
-package com.iterative.groovy.service;
+package me.bazhenov.groovysh;
 
 import jline.UnixTerminal;
 import org.apache.sshd.server.Environment;

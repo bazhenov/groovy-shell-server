@@ -1,4 +1,4 @@
-package com.iterative.groovy.service;
+package me.bazhenov.groovysh;
 
 import groovy.lang.Binding;
 import groovy.lang.Closure;

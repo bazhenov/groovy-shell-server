@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.iterative.groovy.service;
+package me.bazhenov.groovysh;
 
 import org.apache.sshd.SshServer;
 import org.apache.sshd.common.Factory;
@@ -33,8 +33,7 @@ import static jline.TerminalFactory.Flavor.UNIX;
 import static jline.TerminalFactory.registerFlavor;
 
 /**
- * Instantiate this class and call {@link #start()} to create a GroovyShell server socket
- * which can accept client connections and initiate groovysh sessions.
+ * Instantiate this class and call {@link #start()} to start a GroovyShell
  *
  * @author Denis Bazhenov
  */
