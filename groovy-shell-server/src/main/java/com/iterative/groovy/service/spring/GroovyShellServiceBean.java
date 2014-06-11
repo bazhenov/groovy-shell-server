@@ -10,11 +10,14 @@ import org.springframework.context.ApplicationContextAware;
 import java.util.HashMap;
 import java.util.Map;
 
+import static java.util.Arrays.asList;
+
 @SuppressWarnings("UnusedDeclaration")
 public class GroovyShellServiceBean implements InitializingBean, DisposableBean, ApplicationContextAware {
 
 	private final GroovyShellService service;
 	private ApplicationContext applicationContext;
+	private boolean launchAtStart;
 
 	public GroovyShellServiceBean(int port) {
 		this.service = new GroovyShellService();
@@ -25,15 +28,24 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 	}
 
 	public void setLaunchAtStart(boolean launchAtStart) {
-		service.setLaunchAtStart(launchAtStart);
+		this.launchAtStart = launchAtStart;
+	}
+
+	public boolean isLaunchAtStart() {
+		return launchAtStart;
 	}
 
 	public void setBindings(Map<String, Object> bindings) {
 		service.setBindings(bindings);
 	}
 
+	/**
+	 * Set the comma delimited list of default scripts
+	 *
+	 * @param scriptNames script names
+	 */
 	public void setDefaultScriptNames(String scriptNames) {
-		service.setDefaultScriptNames(scriptNames);
+		service.setDefaultScripts(asList(scriptNames.split(",")));
 	}
 
 	@Override
@@ -48,13 +60,15 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (applicationContext != null) {
-			Map<String, Object> bindings = service.getBindings();
-			if (bindings == null)
-				bindings = new HashMap<>();
-			bindings.put("ctx", applicationContext);
-			service.setBindings(bindings);
+		if (launchAtStart) {
+			if (applicationContext != null) {
+				Map<String, Object> bindings = service.getBindings();
+				if (bindings == null)
+					bindings = new HashMap<String, Object>();
+				bindings.put("ctx", applicationContext);
+				service.setBindings(bindings);
+			}
+			service.start();
 		}
-		service.start();
 	}
 }

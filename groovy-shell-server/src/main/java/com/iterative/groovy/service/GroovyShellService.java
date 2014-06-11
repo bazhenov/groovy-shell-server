@@ -15,43 +15,36 @@
  */
 package com.iterative.groovy.service;
 
-import groovy.lang.Binding;
-import org.slf4j.Logger;
+import org.apache.sshd.SshServer;
+import org.apache.sshd.common.Factory;
+import org.apache.sshd.common.NamedFactory;
+import org.apache.sshd.server.Command;
+import org.apache.sshd.server.UserAuth;
+import org.apache.sshd.server.auth.UserAuthNone;
+import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 
-import javax.management.JMException;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import static java.util.Arrays.asList;
-import static org.slf4j.LoggerFactory.getLogger;
+import static jline.TerminalFactory.Flavor.UNIX;
+import static jline.TerminalFactory.registerFlavor;
 
 /**
  * Instantiate this class and call {@link #start()} to create a GroovyShell server socket
  * which can accept client connections and initiate groovysh sessions.
- * <p/>
- * <p/>Each instance of this class will register itself with the default MBean server
- * to allow for management of {@link GroovyShellServiceMBean} methods via a JMX agent.
  *
- * @author Bruce Fancher
  * @author Denis Bazhenov
  */
-public class GroovyShellService implements GroovyShellServiceMBean {
-
-	private static final Logger log = getLogger(GroovyShellService.class);
+public class GroovyShellService {
 
 	private int port;
 	private Map<String, Object> bindings;
 
-	private GroovyShellAcceptor groovyShellAcceptor;
-	private Thread acceptorThread;
-
 	private List<String> defaultScripts = new ArrayList<String>();
-	private boolean launchAtStart = true;
+	private SshServer sshd;
 
 	/**
 	 * Uses a default port of 6789
@@ -65,6 +58,7 @@ public class GroovyShellService implements GroovyShellServiceMBean {
 			throw new IllegalArgumentException("Wrong port number");
 		}
 		this.port = port;
+		registerFlavor(UNIX, SshTerminal.class);
 	}
 
 	public Map<String, Object> getBindings() {
@@ -89,15 +83,6 @@ public class GroovyShellService implements GroovyShellServiceMBean {
 	}
 
 	/**
-	 * Set the comma delimited list of default scripts
-	 *
-	 * @param scriptNames script names
-	 */
-	public void setDefaultScriptNames(String scriptNames) {
-		defaultScripts = asList(scriptNames.split(","));
-	}
-
-	/**
 	 * @return complete List of scripts to be executed for each new client session
 	 */
 	public List<String> getDefaultScripts() {
@@ -108,12 +93,8 @@ public class GroovyShellService implements GroovyShellServiceMBean {
 		this.port = port;
 	}
 
-	private ObjectName getJMXObjectName() throws MalformedObjectNameException {
-		return new ObjectName(getClass().getName() + ":port=" + port);
-	}
-
-	public void setLaunchAtStart(boolean launchAtStart) {
-		this.launchAtStart = launchAtStart;
+	public void setDefaultScripts(List<String> defaultScriptNames) {
+		this.defaultScripts = defaultScriptNames;
 	}
 
 	/**
@@ -122,48 +103,24 @@ public class GroovyShellService implements GroovyShellServiceMBean {
 	 * @throws IOException thrown if socket cannot be opened
 	 */
 	public synchronized void start() throws IOException {
-		if (launchAtStart && acceptorThread == null) {
-			try {
-				ManagementFactory.getPlatformMBeanServer().registerMBean(this, getJMXObjectName());
-			} catch (JMException e) {
-				log.warn("Failed to register GroovyShellService MBean", e);
-			}
-
-			groovyShellAcceptor = new GroovyShellAcceptor(port, createBinding(bindings), defaultScripts);
-			acceptorThread = new Thread(groovyShellAcceptor, "GroovyShAcceptor-" + port);
-			acceptorThread.start();
-		}
+		sshd = SshServer.setUpDefaultServer();
+		sshd.setPort(port);
+		sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider("host.key"));
+		NamedFactory<UserAuth> a = new UserAuthNone.Factory();
+		sshd.setUserAuthFactories(asList(a));
+		sshd.setShellFactory(new GroovyShellFactory());
+		sshd.start();
 	}
 
 	public synchronized void destroy() throws InterruptedException {
-		if (acceptorThread != null) {
-			acceptorThread.interrupt();
-			acceptorThread.join();
-
-			try {
-				ManagementFactory.getPlatformMBeanServer().unregisterMBean(getJMXObjectName());
-			} catch (JMException e) {
-				log.warn("Failed to unregister GroovyShellService MBean", e);
-			}
-
-			acceptorThread = null;
-		}
+		sshd.stop(true);
 	}
 
-	@Override
-	public void killAllClients() {
-		groovyShellAcceptor.killAllClients();
-	}
+	class GroovyShellFactory implements Factory<Command> {
 
-	private static Binding createBinding(Map<String, Object> objects) {
-		Binding binding = new Binding();
-
-		if (objects != null) {
-			for (Map.Entry<String, Object> row : objects.entrySet()) {
-				binding.setVariable(row.getKey(), row.getValue());
-			}
+		@Override
+		public Command create() {
+			return new GroovyShellCommand(sshd, bindings, defaultScripts);
 		}
-
-		return binding;
 	}
 }
