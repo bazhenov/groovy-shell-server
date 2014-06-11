@@ -97,7 +97,7 @@ public class GroovyShellService {
 	}
 
 	/**
-	 * Opens a server socket and starts a new Thread to accept client connections.
+	 * Starts Groovysh
 	 *
 	 * @throws IOException thrown if socket cannot be opened
 	 */

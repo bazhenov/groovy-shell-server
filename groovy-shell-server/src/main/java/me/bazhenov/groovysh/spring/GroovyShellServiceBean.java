@@ -17,9 +17,10 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 
 	private final GroovyShellService service;
 	private ApplicationContext applicationContext;
-	private boolean launchAtStart;
+	private boolean launchAtStart = true;
+	private boolean publishContextBeans = false;
 
-	public GroovyShellServiceBean(int port) {
+	public GroovyShellServiceBean() {
 		this.service = new GroovyShellService();
 	}
 
@@ -29,6 +30,13 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 
 	public void setLaunchAtStart(boolean launchAtStart) {
 		this.launchAtStart = launchAtStart;
+	}
+
+	/**
+	 * @param publishContextBeans should spring beans be published in groovysh context
+	 */
+	public void setPublishContextBeans(boolean publishContextBeans) {
+		this.publishContextBeans = publishContextBeans;
 	}
 
 	public boolean isLaunchAtStart() {
@@ -62,13 +70,21 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 	public void afterPropertiesSet() throws Exception {
 		if (launchAtStart) {
 			if (applicationContext != null) {
-				Map<String, Object> bindings = service.getBindings();
-				if (bindings == null)
-					bindings = new HashMap<String, Object>();
+				Map<String, Object> bindings = new HashMap<String, Object>();
+				if (publishContextBeans)
+					publishContextBeans(bindings, applicationContext);
 				bindings.put("ctx", applicationContext);
+				if (service.getBindings() != null)
+					bindings.putAll(service.getBindings());
 				service.setBindings(bindings);
 			}
 			service.start();
 		}
+	}
+
+	private void publishContextBeans(Map<String, Object> bindings, ApplicationContext ctx) {
+		for (String name : ctx.getBeanDefinitionNames())
+			if (!name.contains("#")) // skip beans without explicit id given
+				bindings.put(name, applicationContext.getBean(name));
 	}
 }
