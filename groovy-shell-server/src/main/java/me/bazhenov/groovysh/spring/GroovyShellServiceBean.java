@@ -82,9 +82,9 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 		}
 	}
 
-	private void publishContextBeans(Map<String, Object> bindings, ApplicationContext ctx) {
+	private static void publishContextBeans(Map<String, Object> bindings, ApplicationContext ctx) {
 		for (String name : ctx.getBeanDefinitionNames())
 			if (!name.contains("#")) // skip beans without explicit id given
-				bindings.put(name, applicationContext.getBean(name));
+				bindings.put(name, ctx.getBean(name));
 	}
 }
