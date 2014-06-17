@@ -18,7 +18,7 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 	private final GroovyShellService service;
 	private ApplicationContext applicationContext;
 	private boolean launchAtStart = true;
-	private boolean publishContextBeans = false;
+	private boolean publishContextBeans = true;
 
 	public GroovyShellServiceBean() {
 		this.service = new GroovyShellService();
@@ -53,7 +53,8 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 	 * @param scriptNames script names
 	 */
 	public void setDefaultScriptNames(String scriptNames) {
-		service.setDefaultScripts(asList(scriptNames.split(",")));
+		if (!scriptNames.trim().isEmpty())
+			service.setDefaultScripts(asList(scriptNames.split(",")));
 	}
 
 	@Override

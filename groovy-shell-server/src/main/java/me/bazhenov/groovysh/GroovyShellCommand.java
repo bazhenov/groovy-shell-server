@@ -60,7 +60,12 @@ class GroovyShellCommand implements Command {
 
 		final Groovysh shell = new Groovysh(createBinding(bindings, out, err), new IO(in, out, err));
 
-		loadDefaultScripts(shell);
+		try {
+			loadDefaultScripts(shell);
+		} catch (Exception e) {
+			createPrintStream(err).println("Unable to load default scripts: "
+				+ e.getClass().getName() + ": " + e.getMessage());
+		}
 
 		String threadName = "GroovySh Client Thread";
 		wrapper = new Thread(new Runnable() {
@@ -88,8 +93,8 @@ class GroovyShellCommand implements Command {
 			for (Map.Entry<String, Object> row : objects.entrySet())
 				binding.setVariable(row.getKey(), row.getValue());
 
-		binding.setVariable("out", new PrintStream(out, true, "utf8"));
-		binding.setVariable("err", new PrintStream(err, true, "utf8"));
+		binding.setVariable("out", createPrintStream(out));
+		binding.setVariable("err", createPrintStream(err));
 		binding.setVariable("activeSessions", new Closure<List<AbstractSession>>(this) {
 			@Override
 			public List<AbstractSession> call() {
@@ -98,6 +103,10 @@ class GroovyShellCommand implements Command {
 		});
 
 		return binding;
+	}
+
+	private static PrintStream createPrintStream(OutputStream out) throws UnsupportedEncodingException {
+		return new PrintStream(out, true, "utf8");
 	}
 
 	@SuppressWarnings({"unchecked", "serial"})
