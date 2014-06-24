@@ -18,13 +18,19 @@ package me.bazhenov.groovysh;
 import org.apache.sshd.SshServer;
 import org.apache.sshd.common.Factory;
 import org.apache.sshd.common.NamedFactory;
+import org.apache.sshd.common.Session;
+import org.apache.sshd.common.SessionListener;
 import org.apache.sshd.server.Command;
+import org.apache.sshd.server.ServerFactoryManager;
 import org.apache.sshd.server.UserAuth;
 import org.apache.sshd.server.auth.UserAuthNone;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
+import org.apache.sshd.server.session.SessionFactory;
+import org.codehaus.groovy.tools.shell.Groovysh;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,6 +44,8 @@ import static jline.TerminalFactory.registerFlavor;
  * @author Denis Bazhenov
  */
 public class GroovyShellService {
+
+	public static final Session.AttributeKey<Groovysh> SHELL_KEY = new Session.AttributeKey<Groovysh>();
 
 	private int port;
 	private Map<String, Object> bindings;
@@ -104,6 +112,30 @@ public class GroovyShellService {
 	public synchronized void start() throws IOException {
 		sshd = SshServer.setUpDefaultServer();
 		sshd.setPort(port);
+
+		Map<String, String> properties = new HashMap<String, String>();
+		properties.put(ServerFactoryManager.IDLE_TIMEOUT, "5000");
+		sshd.setProperties(properties);
+
+		SessionFactory sessionFactory = new SessionFactory();
+		sessionFactory.addListener(new SessionListener() {
+			@Override
+			public void sessionCreated(Session session) {
+			}
+
+			@Override
+			public void sessionEvent(Session sesssion, Event event) {
+			}
+
+			@Override
+			public void sessionClosed(Session session) {
+				Groovysh shell = session.getAttribute(SHELL_KEY);
+				if (shell != null)
+					shell.getRunner().setRunning(false);
+			}
+		});
+		sshd.setSessionFactory(sessionFactory);
+
 		sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider("host.key"));
 		NamedFactory<UserAuth> a = new UserAuthNone.Factory();
 		sshd.setUserAuthFactories(asList(a));

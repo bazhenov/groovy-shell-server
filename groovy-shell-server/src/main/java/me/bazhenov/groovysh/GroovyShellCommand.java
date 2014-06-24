@@ -3,10 +3,13 @@ package me.bazhenov.groovysh;
 import groovy.lang.Binding;
 import groovy.lang.Closure;
 import org.apache.sshd.SshServer;
+import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.session.AbstractSession;
 import org.apache.sshd.server.Command;
 import org.apache.sshd.server.Environment;
 import org.apache.sshd.server.ExitCallback;
+import org.apache.sshd.server.SessionAware;
+import org.apache.sshd.server.session.ServerSession;
 import org.codehaus.groovy.tools.shell.Groovysh;
 import org.codehaus.groovy.tools.shell.IO;
 
@@ -15,8 +18,9 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.Arrays.asList;
+import static me.bazhenov.groovysh.GroovyShellService.SHELL_KEY;
 
-class GroovyShellCommand implements Command {
+class GroovyShellCommand implements Command, SessionAware {
 
 	private final SshServer sshd;
 	private final Map<String, Object> bindings;
@@ -26,11 +30,17 @@ class GroovyShellCommand implements Command {
 	private OutputStream err;
 	private ExitCallback callback;
 	private Thread wrapper;
+	private ServerSession session;
 
 	public GroovyShellCommand(SshServer sshd, Map<String, Object> bindings, List<String> defaultScripts) {
 		this.sshd = sshd;
 		this.bindings = bindings;
 		this.defaultScripts = defaultScripts;
+	}
+
+	@Override
+	public void setSession(ServerSession session) {
+		this.session = session;
 	}
 
 	@Override
@@ -58,7 +68,19 @@ class GroovyShellCommand implements Command {
 		TtyFilterOutputStream out = new TtyFilterOutputStream(this.out);
 		TtyFilterOutputStream err = new TtyFilterOutputStream(this.err);
 
-		final Groovysh shell = new Groovysh(createBinding(bindings, out, err), new IO(in, out, err));
+		IO io = new IO(in, out, err);
+		io.setVerbosity(IO.Verbosity.DEBUG);
+		final Groovysh shell = new Groovysh(createBinding(bindings, out, err), io);
+		shell.setErrorHook(new Closure(this) {
+			@Override
+			public Object call(Object... args) {
+				if (args[0] instanceof InterruptedIOException || args[0] instanceof SshException) {
+					// Stopping groovysh thread in case of broken client channel
+					shell.getRunner().setRunning(false);
+				}
+				return shell.getDefaultErrorHook().call(args);
+			}
+		});
 
 		try {
 			loadDefaultScripts(shell);
@@ -67,7 +89,9 @@ class GroovyShellCommand implements Command {
 				+ e.getClass().getName() + ": " + e.getMessage());
 		}
 
-		String threadName = "GroovySh Client Thread";
+		session.setAttribute(SHELL_KEY, shell);
+
+		String threadName = "GroovySh Client Thread: " + session.getIoSession().getRemoteAddress().toString();
 		wrapper = new Thread(new Runnable() {
 			@Override
 			public void run() {
