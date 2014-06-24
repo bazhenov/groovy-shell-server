@@ -114,7 +114,7 @@ public class GroovyShellService {
 		sshd.setPort(port);
 
 		Map<String, String> properties = new HashMap<String, String>();
-		properties.put(ServerFactoryManager.IDLE_TIMEOUT, "5000");
+		properties.put(ServerFactoryManager.IDLE_TIMEOUT, "3600000");
 		sshd.setProperties(properties);
 
 		SessionFactory sessionFactory = new SessionFactory();
