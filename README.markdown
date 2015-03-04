@@ -21,7 +21,7 @@ Just include following dependency in your `pom.xml`:
 	<dependency>
 		<groupId>me.bazhenov.groovy-shell</groupId>
 		<artifactId>groovy-shell-server</artifactId>
-		<version>1.3</version>
+		<version>1.5</version>
 	</dependency>
 
 Using
@@ -42,9 +42,9 @@ And destroy it on application exit:
 
 	service.destroy();
 
-Groovy shell server use `socat` as a client. So connecting to a groovy shell server as simple as:
+As of 1.5 Groovy shell server use plain `ssh` as a client. So connecting to a groovy shell server as simple as:
 
-	$ socat -,raw,echo=0,opost TCP:127.0.0.1:6789
+	$ ssh 127.1 -p 6789
 	Groovy Shell (2.1.9, JVM: 1.6.0_65)
 	Type 'help' or '\h' for help.
 	-------------------------------------------------------------------------------
@@ -62,30 +62,23 @@ Groovy shell server use `socat` as a client. So connecting to a groovy shell ser
 	===> 1..10
 	groovy:000>
 
-You can make alias to simplify your life:
-
-	$ alias groovy-shell='socat -,raw,echo=0,opost'
-	$ groovy-shell TCP:127.0.0.1:6789
-	Groovy Shell (2.1.9, JVM: 1.6.0_65)
-	Type 'help' or '\h' for help.
-	-------------------------------------------------------------------------------
-	groovy:000>
-
 Integrating with Spring
 -----------------------
 You can easily integrate Groovy Shell with Spring container:
 
-	<bean class="com.iterative.groovy.service.spring.GroovyShellServiceBean"
+	<bean class="me.bazhenov.groovysh.spring.GroovyShellServiceBean"
 		p:port="6789"
 		p:lauchAtStart="true"
+		p:publishContextBeans="true"
 		p:bindings-ref="bindings"/>
 
 	<u:map id="bindings">
 		<entry key="foo" value="bar"/>
 	</u:map>
 
-When using `GroovyShellServiceBean` reference to the `ApplicationContext` is added to bindings implicitly, so in shell you can get objects
-from container by id or type (e.g. `ctx.getBean('id')`).
+When `publishContextBeans` is true all context beans are published to groovy shell context. So bean with id `foo`
+will be available as `foo` in groovy shell. Also reference to the `ApplicationContext` is added to bindings implicitly
+as `ctx`. So in shell you can get objects from container by id or type (e.g. `ctx.getBean('id')`).
 
 Build
 -----
