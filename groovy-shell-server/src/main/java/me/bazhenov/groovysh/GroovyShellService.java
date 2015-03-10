@@ -48,6 +48,7 @@ public class GroovyShellService {
 	public static final Session.AttributeKey<Groovysh> SHELL_KEY = new Session.AttributeKey<Groovysh>();
 
 	private int port;
+	private String host;
 	private Map<String, Object> bindings;
 
 	private List<String> defaultScripts = new ArrayList<String>();
@@ -100,6 +101,10 @@ public class GroovyShellService {
 		this.port = port;
 	}
 
+	public void setHost(final String host) {
+		this.host = host;
+	}
+
 	public void setDefaultScripts(List<String> defaultScriptNames) {
 		this.defaultScripts = defaultScriptNames;
 	}
@@ -112,6 +117,9 @@ public class GroovyShellService {
 	public synchronized void start() throws IOException {
 		sshd = SshServer.setUpDefaultServer();
 		sshd.setPort(port);
+		if (host != null) {
+			sshd.setHost(host);
+		}
 
 		Map<String, String> properties = new HashMap<String, String>();
 		properties.put(ServerFactoryManager.IDLE_TIMEOUT, "3600000");
