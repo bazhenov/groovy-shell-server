@@ -92,7 +92,7 @@ Archives will be placed in `groovy-shell-server/target/`.
 
 In order to simple run applications you can use `maven-exec` plugin:
 
-	mvn -f groovy-shell-server/pom.xml exec:java -Dexec.mainClass=com.iterative.groovy.service.Main
+	mvn -f groovy-shell-server/pom.xml exec:java -Dexec.mainClass=me.bazhenov.groovysh.Main
 
 Management
 ----------
