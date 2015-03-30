@@ -68,7 +68,7 @@ You can easily integrate Groovy Shell with Spring container:
 
 	<bean class="me.bazhenov.groovysh.spring.GroovyShellServiceBean"
 		p:port="6789"
-		p:lauchAtStart="true"
+		p:launchAtStart="true"
 		p:publishContextBeans="true"
 		p:bindings-ref="bindings"/>
 
