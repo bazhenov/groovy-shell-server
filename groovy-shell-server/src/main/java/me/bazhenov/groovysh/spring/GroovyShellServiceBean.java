@@ -22,10 +22,14 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 	private boolean publishContextBeans = true;
 
 	public GroovyShellServiceBean() {
-		this.service = new GroovyShellService();
+		this.service = newService();
 	}
 
-	public void setPort(int port) {
+    protected GroovyShellService newService() {
+        return new GroovyShellService();
+    }
+
+    public void setPort(int port) {
 		service.setPort(port);
 	}
 
@@ -48,7 +52,11 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 		service.setBindings(bindings);
 	}
 
-	/**
+    protected GroovyShellService getService() {
+        return service;
+    }
+
+    /**
 	 * Set the comma delimited list of default scripts
 	 *
 	 * @param scriptNames script names
@@ -57,10 +65,6 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 		if (!scriptNames.trim().isEmpty())
 			service.setDefaultScripts(asList(scriptNames.split(",")));
 	}
-
-    public void setKeyPairProvider(KeyPairProvider keyPairProvider) {
-        service.setKeyPairProvider(keyPairProvider);
-    }
 
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
