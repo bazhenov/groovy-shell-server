@@ -1,6 +1,7 @@
 package me.bazhenov.groovysh.spring;
 
 import me.bazhenov.groovysh.GroovyShellService;
+import org.apache.sshd.common.KeyPairProvider;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -56,6 +57,10 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 		if (!scriptNames.trim().isEmpty())
 			service.setDefaultScripts(asList(scriptNames.split(",")));
 	}
+
+    public void setKeyPairProvider(KeyPairProvider keyPairProvider) {
+        service.setKeyPairProvider(keyPairProvider);
+    }
 
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
