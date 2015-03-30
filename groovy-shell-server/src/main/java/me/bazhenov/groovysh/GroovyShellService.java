@@ -17,6 +17,7 @@ package me.bazhenov.groovysh;
 
 import org.apache.sshd.SshServer;
 import org.apache.sshd.common.Factory;
+import org.apache.sshd.common.KeyPairProvider;
 import org.apache.sshd.common.NamedFactory;
 import org.apache.sshd.common.Session;
 import org.apache.sshd.common.SessionListener;
@@ -53,6 +54,7 @@ public class GroovyShellService {
 
 	private List<String> defaultScripts = new ArrayList<String>();
 	private SshServer sshd;
+    private KeyPairProvider keyPairProvider = new SimpleGeneratorHostKeyProvider("host.key");
 
 	/**
 	 * Uses a default port of 6789
@@ -109,7 +111,11 @@ public class GroovyShellService {
 		this.defaultScripts = defaultScriptNames;
 	}
 
-	/**
+    public void setKeyPairProvider(KeyPairProvider keyPairProvider) {
+        this.keyPairProvider = keyPairProvider;
+    }
+
+    /**
 	 * Starts Groovysh
 	 *
 	 * @throws IOException thrown if socket cannot be opened
@@ -144,7 +150,7 @@ public class GroovyShellService {
 		});
 		sshd.setSessionFactory(sessionFactory);
 
-		sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider("host.key"));
+		sshd.setKeyPairProvider(keyPairProvider);
 		NamedFactory<UserAuth> a = new UserAuthNone.Factory();
 		sshd.setUserAuthFactories(asList(a));
 		sshd.setShellFactory(new GroovyShellFactory());
