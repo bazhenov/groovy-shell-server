@@ -21,7 +21,7 @@ Just include following dependency in your `pom.xml`:
 	<dependency>
 		<groupId>me.bazhenov.groovy-shell</groupId>
 		<artifactId>groovy-shell-server</artifactId>
-		<version>1.5</version>
+		<version>1.6</version>
 	</dependency>
 
 Using
@@ -68,7 +68,7 @@ You can easily integrate Groovy Shell with Spring container:
 
 	<bean class="me.bazhenov.groovysh.spring.GroovyShellServiceBean"
 		p:port="6789"
-		p:lauchAtStart="true"
+		p:launchAtStart="true"
 		p:publishContextBeans="true"
 		p:bindings-ref="bindings"/>
 
@@ -92,7 +92,7 @@ Archives will be placed in `groovy-shell-server/target/`.
 
 In order to simple run applications you can use `maven-exec` plugin:
 
-	mvn -f groovy-shell-server/pom.xml exec:java -Dexec.mainClass=com.iterative.groovy.service.Main
+	mvn -f groovy-shell-server/pom.xml exec:java -Dexec.mainClass=me.bazhenov.groovysh.Main
 
 Management
 ----------

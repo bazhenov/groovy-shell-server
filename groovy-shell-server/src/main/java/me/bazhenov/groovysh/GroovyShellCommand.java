@@ -97,7 +97,7 @@ class GroovyShellCommand implements Command, SessionAware {
 			public void run() {
 				try {
 					SshTerminal.registerEnvironment(env);
-					shell.run();
+					shell.run("");
 					callback.onExit(0);
 				} catch (RuntimeException e) {
 					callback.onExit(-1, e.getMessage());
