@@ -21,7 +21,6 @@ import org.apache.sshd.common.NamedFactory;
 import org.apache.sshd.common.Session;
 import org.apache.sshd.common.SessionListener;
 import org.apache.sshd.server.Command;
-import org.apache.sshd.server.ServerFactoryManager;
 import org.apache.sshd.server.UserAuth;
 import org.apache.sshd.server.auth.UserAuthNone;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
@@ -35,14 +34,18 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.HOURS;
 import static jline.TerminalFactory.Flavor.UNIX;
 import static jline.TerminalFactory.registerFlavor;
+import static org.apache.sshd.SshServer.setUpDefaultServer;
+import static org.apache.sshd.server.ServerFactoryManager.IDLE_TIMEOUT;
 
 /**
  * Instantiate this class and call {@link #start()} to start a GroovyShell
  *
  * @author Denis Bazhenov
  */
+@SuppressWarnings("UnusedDeclaration")
 public class GroovyShellService {
 
 	public static final Session.AttributeKey<Groovysh> SHELL_KEY = new Session.AttributeKey<Groovysh>();
@@ -109,54 +112,55 @@ public class GroovyShellService {
 		this.defaultScripts = defaultScriptNames;
 	}
 
-    /**
+	/**
 	 * Starts Groovysh
 	 *
 	 * @throws IOException thrown if socket cannot be opened
 	 */
 	public synchronized void start() throws IOException {
-        sshd = buildSshServer();
+		sshd = buildSshServer();
 		sshd.start();
 	}
 
-    protected SshServer buildSshServer() {
-        SshServer sshd = SshServer.setUpDefaultServer();
-        sshd.setPort(port);
-        if (host != null) {
-            sshd.setHost(host);
-        }
+	protected SshServer buildSshServer() {
+		SshServer sshd = setUpDefaultServer();
+		sshd.setPort(port);
+		if (host != null) {
+			sshd.setHost(host);
+		}
 
-        Map<String, String> properties = new HashMap<String, String>();
-        properties.put(ServerFactoryManager.IDLE_TIMEOUT, "3600000");
-        sshd.setProperties(properties);
+		Map<String, String> properties = new HashMap<String, String>();
+		properties.put(IDLE_TIMEOUT, Long.toString(HOURS.toMillis(1)));
+		sshd.setProperties(properties);
 
-        SessionFactory sessionFactory = new SessionFactory();
-        sessionFactory.addListener(new SessionListener() {
-            @Override
-            public void sessionCreated(Session session) {
-            }
+		SessionFactory sessionFactory = new SessionFactory();
+		sessionFactory.addListener(new SessionListener() {
+			@Override
+			public void sessionCreated(Session session) {
+			}
 
-            @Override
-            public void sessionEvent(Session sesssion, Event event) {
-            }
+			@Override
+			public void sessionEvent(Session sesssion, Event event) {
+			}
 
-            @Override
-            public void sessionClosed(Session session) {
-                Groovysh shell = session.getAttribute(SHELL_KEY);
-                if (shell != null)
-                    shell.getRunner().setRunning(false);
-            }
-        });
-        sshd.setSessionFactory(sessionFactory);
+			@Override
+			public void sessionClosed(Session session) {
+				Groovysh shell = session.getAttribute(SHELL_KEY);
+				if (shell != null)
+					shell.getRunner().setRunning(false);
+			}
+		});
+		sshd.setSessionFactory(sessionFactory);
 
-        sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider("host.key"));
-        NamedFactory<UserAuth> a = new UserAuthNone.Factory();
-        sshd.setUserAuthFactories(asList(a));
-        sshd.setShellFactory(new GroovyShellFactory());
-        return sshd;
-    }
+		sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider("host.key"));
+		NamedFactory<UserAuth> a = new UserAuthNone.Factory();
+		//noinspection unchecked
+		sshd.setUserAuthFactories(asList(a));
+		sshd.setShellFactory(new GroovyShellFactory());
+		return sshd;
+	}
 
-    public synchronized void destroy() throws InterruptedException {
+	public synchronized void destroy() throws InterruptedException {
 		sshd.stop(true);
 	}
 

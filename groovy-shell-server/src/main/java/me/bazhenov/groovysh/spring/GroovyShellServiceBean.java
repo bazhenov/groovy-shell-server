@@ -1,7 +1,6 @@
 package me.bazhenov.groovysh.spring;
 
 import me.bazhenov.groovysh.GroovyShellService;
-import org.apache.sshd.common.KeyPairProvider;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -25,11 +24,11 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 		this.service = newService();
 	}
 
-    protected GroovyShellService newService() {
-        return new GroovyShellService();
-    }
+	protected GroovyShellService newService() {
+		return new GroovyShellService();
+	}
 
-    public void setPort(int port) {
+	public void setPort(int port) {
 		service.setPort(port);
 	}
 
@@ -52,11 +51,11 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 		service.setBindings(bindings);
 	}
 
-    protected GroovyShellService getService() {
-        return service;
-    }
+	protected GroovyShellService getService() {
+		return service;
+	}
 
-    /**
+	/**
 	 * Set the comma delimited list of default scripts
 	 *
 	 * @param scriptNames script names
