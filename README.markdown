@@ -62,6 +62,11 @@ As of 1.5 Groovy shell server use plain `ssh` as a client. So connecting to a gr
 	===> 1..10
 	groovy:000>
 
+By default, no authentication is required (any username is allowed to open a SSH connection). You can enable password authentication by creating your own implementation of `org.apache.sshd.server.PasswordAuthenticator` interface and passing an instance to server:
+	
+	PasswordAuthenticator myPasswordAuthenticator = new MyPasswordAuthenticator();
+	service.setPasswordAuthenticator(myPasswordAuthenticator);
+
 Integrating with Spring
 -----------------------
 You can easily integrate Groovy Shell with Spring container:
@@ -79,6 +84,8 @@ You can easily integrate Groovy Shell with Spring container:
 When `publishContextBeans` is true all context beans are published to groovy shell context. So bean with id `foo`
 will be available as `foo` in groovy shell. Also reference to the `ApplicationContext` is added to bindings implicitly
 as `ctx`. So in shell you can get objects from container by id or type (e.g. `ctx.getBean('id')`).
+
+It is also possible to enable password authentication by setting `passwordAuthenticator` property on `GroovyShellServiceBean`.
 
 Build
 -----
