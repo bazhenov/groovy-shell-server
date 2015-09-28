@@ -1,6 +1,8 @@
 package me.bazhenov.groovysh.spring;
 
 import me.bazhenov.groovysh.GroovyShellService;
+
+import org.apache.sshd.server.PasswordAuthenticator;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -53,6 +55,10 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 
 	protected GroovyShellService getService() {
 		return service;
+	}
+
+	public void setPasswordAuthenticator(PasswordAuthenticator passwordAuthenticator) {
+		service.setPasswordAuthenticator(passwordAuthenticator);
 	}
 
 	/**
