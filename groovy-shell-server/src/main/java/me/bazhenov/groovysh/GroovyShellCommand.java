@@ -2,6 +2,8 @@ package me.bazhenov.groovysh;
 
 import groovy.lang.Binding;
 import groovy.lang.Closure;
+import me.bazhenov.groovysh.thread.ServerSessionAwareThreadFactory;
+
 import org.apache.sshd.SshServer;
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.session.AbstractSession;
@@ -25,6 +27,7 @@ class GroovyShellCommand implements Command, SessionAware {
 	private final SshServer sshd;
 	private final Map<String, Object> bindings;
 	private final List<String> defaultScripts;
+	private final ServerSessionAwareThreadFactory threadFactory;
 	private InputStream in;
 	private OutputStream out;
 	private OutputStream err;
@@ -32,10 +35,11 @@ class GroovyShellCommand implements Command, SessionAware {
 	private Thread wrapper;
 	private ServerSession session;
 
-	public GroovyShellCommand(SshServer sshd, Map<String, Object> bindings, List<String> defaultScripts) {
+	public GroovyShellCommand(SshServer sshd, Map<String, Object> bindings, List<String> defaultScripts, ServerSessionAwareThreadFactory threadFactory) {
 		this.sshd = sshd;
 		this.bindings = bindings;
 		this.defaultScripts = defaultScripts;
+		this.threadFactory = threadFactory;
 	}
 
 	@Override
@@ -91,8 +95,7 @@ class GroovyShellCommand implements Command, SessionAware {
 
 		session.setAttribute(SHELL_KEY, shell);
 
-		String threadName = "GroovySh Client Thread: " + session.getIoSession().getRemoteAddress().toString();
-		wrapper = new Thread(new Runnable() {
+		wrapper = threadFactory.newThread(new Runnable() {
 			@Override
 			public void run() {
 				try {
@@ -105,7 +108,7 @@ class GroovyShellCommand implements Command, SessionAware {
 					callback.onExit(-1, e.getMessage());
 				}
 			}
-		}, threadName);
+		}, session);
 		wrapper.start();
 	}
 

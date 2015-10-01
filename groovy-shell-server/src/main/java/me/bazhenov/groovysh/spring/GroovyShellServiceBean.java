@@ -1,6 +1,7 @@
 package me.bazhenov.groovysh.spring;
 
 import me.bazhenov.groovysh.GroovyShellService;
+import me.bazhenov.groovysh.thread.ServerSessionAwareThreadFactory;
 
 import org.apache.sshd.server.PasswordAuthenticator;
 import org.springframework.beans.BeansException;
@@ -60,6 +61,10 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 
 	public void setPasswordAuthenticator(PasswordAuthenticator passwordAuthenticator) {
 		service.setPasswordAuthenticator(passwordAuthenticator);
+	}
+
+	public void setThreadFactory(ServerSessionAwareThreadFactory threadFactory) {
+	    service.setThreadFactory(threadFactory);
 	}
 
 	/**
