@@ -21,19 +21,21 @@ import org.apache.sshd.common.NamedFactory;
 import org.apache.sshd.common.Session;
 import org.apache.sshd.common.SessionListener;
 import org.apache.sshd.server.Command;
+import org.apache.sshd.server.PasswordAuthenticator;
 import org.apache.sshd.server.UserAuth;
 import org.apache.sshd.server.auth.UserAuthNone;
+import org.apache.sshd.server.auth.UserAuthPassword;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.session.SessionFactory;
 import org.codehaus.groovy.tools.shell.Groovysh;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static jline.TerminalFactory.Flavor.UNIX;
 import static jline.TerminalFactory.registerFlavor;
@@ -53,6 +55,7 @@ public class GroovyShellService {
 	private int port;
 	private String host;
 	private Map<String, Object> bindings;
+	private PasswordAuthenticator passwordAuthenticator;
 
 	private List<String> defaultScripts = new ArrayList<String>();
 	private SshServer sshd;
@@ -108,6 +111,10 @@ public class GroovyShellService {
 		this.host = host;
 	}
 
+	public void setPasswordAuthenticator (PasswordAuthenticator passwordAuthenticator) {
+		this.passwordAuthenticator = passwordAuthenticator;
+	}
+
 	public void setDefaultScripts(List<String> defaultScriptNames) {
 		this.defaultScripts = defaultScriptNames;
 	}
@@ -153,11 +160,20 @@ public class GroovyShellService {
 		sshd.setSessionFactory(sessionFactory);
 
 		sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider("host.key"));
-		NamedFactory<UserAuth> a = new UserAuthNone.Factory();
-		//noinspection unchecked
-		sshd.setUserAuthFactories(asList(a));
+		configureAuthentication(sshd);
 		sshd.setShellFactory(new GroovyShellFactory());
 		return sshd;
+	}
+
+	private void configureAuthentication(SshServer sshd) {
+		NamedFactory<UserAuth> auth;
+		if (this.passwordAuthenticator != null) {
+			sshd.setPasswordAuthenticator(this.passwordAuthenticator);
+			auth = new UserAuthPassword.Factory();
+		} else {
+			auth = new UserAuthNone.Factory();
+		}
+		sshd.setUserAuthFactories(Collections.singletonList(auth));
 	}
 
 	public synchronized void destroy() throws InterruptedException {

@@ -1,7 +1,10 @@
 package me.bazhenov.groovysh.spring;
 
 import me.bazhenov.groovysh.GroovyShellService;
+
+import org.apache.sshd.server.PasswordAuthenticator;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanIsAbstractException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
@@ -55,6 +58,10 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 		return service;
 	}
 
+	public void setPasswordAuthenticator(PasswordAuthenticator passwordAuthenticator) {
+		service.setPasswordAuthenticator(passwordAuthenticator);
+	}
+
 	/**
 	 * Set the comma delimited list of default scripts
 	 *
@@ -92,8 +99,14 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 	}
 
 	private static void publishContextBeans(Map<String, Object> bindings, ApplicationContext ctx) {
-		for (String name : ctx.getBeanDefinitionNames())
-			if (!name.contains("#")) // skip beans without explicit id given
-				bindings.put(name, ctx.getBean(name));
+		for (String name : ctx.getBeanDefinitionNames()) {
+			if (!name.contains("#")) { // skip beans without explicit id given
+				try {
+					bindings.put(name, ctx.getBean(name));
+				} catch (BeanIsAbstractException exc) {
+					// Skip abstract beans
+				}
+			}
+		}
 	}
 }
