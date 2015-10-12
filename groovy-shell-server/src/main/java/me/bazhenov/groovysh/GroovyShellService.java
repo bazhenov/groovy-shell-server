@@ -15,6 +15,9 @@
  */
 package me.bazhenov.groovysh;
 
+import me.bazhenov.groovysh.thread.DefaultGroovyshThreadFactory;
+import me.bazhenov.groovysh.thread.ServerSessionAwareThreadFactory;
+
 import org.apache.sshd.SshServer;
 import org.apache.sshd.common.Factory;
 import org.apache.sshd.common.NamedFactory;
@@ -56,6 +59,7 @@ public class GroovyShellService {
 	private String host;
 	private Map<String, Object> bindings;
 	private PasswordAuthenticator passwordAuthenticator;
+	private ServerSessionAwareThreadFactory threadFactory = new DefaultGroovyshThreadFactory();
 
 	private List<String> defaultScripts = new ArrayList<String>();
 	private SshServer sshd;
@@ -113,6 +117,10 @@ public class GroovyShellService {
 
 	public void setPasswordAuthenticator (PasswordAuthenticator passwordAuthenticator) {
 		this.passwordAuthenticator = passwordAuthenticator;
+	}
+
+	public void setThreadFactory(ServerSessionAwareThreadFactory threadFactory) {
+	    this.threadFactory = threadFactory;
 	}
 
 	public void setDefaultScripts(List<String> defaultScriptNames) {
@@ -184,7 +192,7 @@ public class GroovyShellService {
 
 		@Override
 		public Command create() {
-			return new GroovyShellCommand(sshd, bindings, defaultScripts);
+			return new GroovyShellCommand(sshd, bindings, defaultScripts, threadFactory);
 		}
 	}
 }
