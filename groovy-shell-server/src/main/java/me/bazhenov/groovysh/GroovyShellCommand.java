@@ -150,7 +150,7 @@ class GroovyShellCommand implements Command, SessionAware {
 					}
 				});
 
-				org.codehaus.groovy.tools.shell.Command cmd = shell.getRegistry().find("load");
+				org.codehaus.groovy.tools.shell.Command cmd = shell.getRegistry().find(":load");
 				for (String script : defaultScripts) {
 					cmd.execute(asList(script));
 				}
