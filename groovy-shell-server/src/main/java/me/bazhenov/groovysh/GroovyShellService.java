@@ -17,21 +17,22 @@ package me.bazhenov.groovysh;
 
 import me.bazhenov.groovysh.thread.DefaultGroovyshThreadFactory;
 import me.bazhenov.groovysh.thread.ServerSessionAwareThreadFactory;
-
-import org.apache.sshd.SshServer;
 import org.apache.sshd.common.Factory;
 import org.apache.sshd.common.NamedFactory;
-import org.apache.sshd.common.Session;
-import org.apache.sshd.common.SessionListener;
+import org.apache.sshd.common.PropertyResolverUtils;
+import org.apache.sshd.common.session.Session;
+import org.apache.sshd.common.session.SessionListener;
 import org.apache.sshd.server.Command;
-import org.apache.sshd.server.PasswordAuthenticator;
-import org.apache.sshd.server.UserAuth;
-import org.apache.sshd.server.auth.UserAuthNone;
-import org.apache.sshd.server.auth.UserAuthPassword;
+import org.apache.sshd.server.SshServer;
+import org.apache.sshd.server.auth.UserAuth;
+import org.apache.sshd.server.auth.UserAuthNoneFactory;
+import org.apache.sshd.server.auth.password.PasswordAuthenticator;
+import org.apache.sshd.server.auth.password.UserAuthPasswordFactory;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.session.SessionFactory;
 import org.codehaus.groovy.tools.shell.Groovysh;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,8 +43,8 @@ import java.util.Map;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static jline.TerminalFactory.Flavor.UNIX;
 import static jline.TerminalFactory.registerFlavor;
-import static org.apache.sshd.SshServer.setUpDefaultServer;
 import static org.apache.sshd.server.ServerFactoryManager.IDLE_TIMEOUT;
+import static org.apache.sshd.server.SshServer.setUpDefaultServer;
 
 /**
  * Instantiate this class and call {@link #start()} to start a GroovyShell
@@ -144,12 +145,9 @@ public class GroovyShellService {
 			sshd.setHost(host);
 		}
 
-		Map<String, String> properties = new HashMap<String, String>();
-		properties.put(IDLE_TIMEOUT, Long.toString(HOURS.toMillis(1)));
-		sshd.setProperties(properties);
+		PropertyResolverUtils.updateProperty(sshd, IDLE_TIMEOUT, HOURS.toMillis(1));
 
-		SessionFactory sessionFactory = new SessionFactory();
-		sessionFactory.addListener(new SessionListener() {
+		sshd.addSessionListener(new SessionListener() {
 			@Override
 			public void sessionCreated(Session session) {
 			}
@@ -159,15 +157,18 @@ public class GroovyShellService {
 			}
 
 			@Override
+			public void sessionException(Session session, Throwable t) {
+			}
+
+			@Override
 			public void sessionClosed(Session session) {
 				Groovysh shell = session.getAttribute(SHELL_KEY);
 				if (shell != null)
 					shell.getRunner().setRunning(false);
 			}
 		});
-		sshd.setSessionFactory(sessionFactory);
 
-		sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider("host.key"));
+		sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(new File("host.key").toPath()));
 		configureAuthentication(sshd);
 		sshd.setShellFactory(new GroovyShellFactory());
 		return sshd;
@@ -177,14 +178,14 @@ public class GroovyShellService {
 		NamedFactory<UserAuth> auth;
 		if (this.passwordAuthenticator != null) {
 			sshd.setPasswordAuthenticator(this.passwordAuthenticator);
-			auth = new UserAuthPassword.Factory();
+			auth = new UserAuthPasswordFactory();
 		} else {
-			auth = new UserAuthNone.Factory();
+			auth = new UserAuthNoneFactory();
 		}
 		sshd.setUserAuthFactories(Collections.singletonList(auth));
 	}
 
-	public synchronized void destroy() throws InterruptedException {
+	public synchronized void destroy() throws IOException {
 		sshd.stop(true);
 	}
 

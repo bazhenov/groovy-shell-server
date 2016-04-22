@@ -3,19 +3,23 @@ package me.bazhenov.groovysh;
 import groovy.lang.Binding;
 import groovy.lang.Closure;
 import me.bazhenov.groovysh.thread.ServerSessionAwareThreadFactory;
-
-import org.apache.sshd.SshServer;
 import org.apache.sshd.common.SshException;
-import org.apache.sshd.common.session.AbstractSession;
+import org.apache.sshd.common.session.helpers.AbstractSession;
 import org.apache.sshd.server.Command;
 import org.apache.sshd.server.Environment;
 import org.apache.sshd.server.ExitCallback;
 import org.apache.sshd.server.SessionAware;
+import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.session.ServerSession;
 import org.codehaus.groovy.tools.shell.Groovysh;
 import org.codehaus.groovy.tools.shell.IO;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InterruptedIOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map;
 
