@@ -17,11 +17,6 @@
 			<version>2.2.2</version>
 		</dependency>
 		<dependency>
-			<groupId>org.fusesource.jansi</groupId>
-			<artifactId>jansi</artifactId>
-			<version>1.11</version>
-		</dependency>
-		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
 			<version>3.2.6.RELEASE</version>
