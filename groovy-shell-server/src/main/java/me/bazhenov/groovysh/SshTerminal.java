@@ -20,7 +20,11 @@ public class SshTerminal extends UnixTerminal {
 	public int getWidth() {
 		Environment environment = retrieveEnvironment();
 		try {
-			return parseInt(environment.getEnv().get("COLUMNS"));
+			int columns = parseInt(environment.getEnv().get("COLUMNS"));
+			if (columns == 0) {
+				return DEFAULT_WIDTH;
+			}
+			return columns;
 		} catch (NumberFormatException e) {
 			return DEFAULT_WIDTH;
 		}
@@ -30,7 +34,11 @@ public class SshTerminal extends UnixTerminal {
 	public int getHeight() {
 		Environment environment = retrieveEnvironment();
 		try {
-			return parseInt(environment.getEnv().get("LINES"));
+			int lines = parseInt(environment.getEnv().get("LINES"));
+			if (lines == 0) {
+				return DEFAULT_HEIGHT;
+			}
+			return lines;
 		} catch (NumberFormatException e) {
 			return DEFAULT_HEIGHT;
 		}
