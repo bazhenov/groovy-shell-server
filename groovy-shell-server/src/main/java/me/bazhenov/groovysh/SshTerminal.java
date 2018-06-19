@@ -4,13 +4,14 @@ import jline.UnixTerminal;
 import org.apache.sshd.server.Environment;
 
 import static java.lang.Integer.parseInt;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Overriding class for reading terminal width from SSH Environment
  */
 public class SshTerminal extends UnixTerminal {
 
-	private static final ThreadLocal<Environment> env = new ThreadLocal<Environment>();
+	private static final ThreadLocal<Environment> env = new ThreadLocal<>();
 
 	public SshTerminal() throws Exception {
 		super();
@@ -18,13 +19,16 @@ public class SshTerminal extends UnixTerminal {
 
 	@Override
 	public int getWidth() {
-		Environment environment = retrieveEnvironment();
+		String columnsAsString = retrieveEnvironment().getEnv().get("COLUMNS");
 		try {
-			int columns = parseInt(environment.getEnv().get("COLUMNS"));
-			if (columns == 0) {
+			if (isNullOrEmpty(columnsAsString))
 				return DEFAULT_WIDTH;
-			}
-			return columns;
+
+			int columns = parseInt(columnsAsString);
+			return columns > 0
+				? columns
+				: DEFAULT_WIDTH;
+
 		} catch (NumberFormatException e) {
 			return DEFAULT_WIDTH;
 		}
@@ -32,27 +36,31 @@ public class SshTerminal extends UnixTerminal {
 
 	@Override
 	public int getHeight() {
-		Environment environment = retrieveEnvironment();
+		String linesAsString = retrieveEnvironment().getEnv().get("LINES");
 		try {
-			int lines = parseInt(environment.getEnv().get("LINES"));
-			if (lines == 0) {
+			if (isNullOrEmpty(linesAsString))
 				return DEFAULT_HEIGHT;
-			}
-			return lines;
+
+			int lines = parseInt(linesAsString);
+			return lines > 0
+				? lines
+				: DEFAULT_HEIGHT;
+
 		} catch (NumberFormatException e) {
 			return DEFAULT_HEIGHT;
 		}
 	}
 
 	private Environment retrieveEnvironment() {
-		Environment environment = env.get();
-		if (environment == null)
-			throw new NullPointerException("Environement is not registered");
-		return environment;
+		return requireNonNull(env.get(), "Environment is not registered");
+	}
+
+	private static boolean isNullOrEmpty(String value) {
+		return value == null || value.isEmpty();
 	}
 
 
-	public static void registerEnvironment(Environment environment) {
+	static void registerEnvironment(Environment environment) {
 		env.set(environment);
 	}
 }
