@@ -1,18 +1,7 @@
 package me.bazhenov.groovysh;
 
-import groovy.lang.Binding;
-import groovy.lang.Closure;
-import me.bazhenov.groovysh.thread.ServerSessionAwareThreadFactory;
-import org.apache.sshd.common.SshException;
-import org.apache.sshd.common.session.helpers.AbstractSession;
-import org.apache.sshd.server.Command;
-import org.apache.sshd.server.Environment;
-import org.apache.sshd.server.ExitCallback;
-import org.apache.sshd.server.SessionAware;
-import org.apache.sshd.server.SshServer;
-import org.apache.sshd.server.session.ServerSession;
-import org.codehaus.groovy.tools.shell.Groovysh;
-import org.codehaus.groovy.tools.shell.IO;
+import static java.util.Arrays.asList;
+import static me.bazhenov.groovysh.GroovyShellService.SHELL_KEY;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,8 +12,20 @@ import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.Arrays.asList;
-import static me.bazhenov.groovysh.GroovyShellService.SHELL_KEY;
+import org.apache.sshd.common.SshException;
+import org.apache.sshd.common.session.helpers.AbstractSession;
+import org.apache.sshd.server.Environment;
+import org.apache.sshd.server.ExitCallback;
+import org.apache.sshd.server.SessionAware;
+import org.apache.sshd.server.SshServer;
+import org.apache.sshd.server.command.Command;
+import org.apache.sshd.server.session.ServerSession;
+import org.codehaus.groovy.tools.shell.Groovysh;
+import org.codehaus.groovy.tools.shell.IO;
+
+import groovy.lang.Binding;
+import groovy.lang.Closure;
+import me.bazhenov.groovysh.thread.ServerSessionAwareThreadFactory;
 
 class GroovyShellCommand implements Command, SessionAware {
 

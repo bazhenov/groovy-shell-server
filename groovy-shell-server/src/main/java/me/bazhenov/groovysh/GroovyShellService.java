@@ -15,36 +15,35 @@
  */
 package me.bazhenov.groovysh;
 
-import me.bazhenov.groovysh.thread.DefaultGroovyshThreadFactory;
-import me.bazhenov.groovysh.thread.ServerSessionAwareThreadFactory;
-import org.apache.sshd.common.Factory;
-import org.apache.sshd.common.NamedFactory;
-import org.apache.sshd.common.PropertyResolverUtils;
-import org.apache.sshd.common.session.Session;
-import org.apache.sshd.common.session.SessionListener;
-import org.apache.sshd.server.Command;
-import org.apache.sshd.server.SshServer;
-import org.apache.sshd.server.auth.UserAuth;
-import org.apache.sshd.server.auth.UserAuthNoneFactory;
-import org.apache.sshd.server.auth.password.PasswordAuthenticator;
-import org.apache.sshd.server.auth.password.UserAuthPasswordFactory;
-import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
-import org.apache.sshd.server.session.SessionFactory;
-import org.codehaus.groovy.tools.shell.Groovysh;
+import static java.util.concurrent.TimeUnit.HOURS;
+import static jline.TerminalFactory.registerFlavor;
+import static jline.TerminalFactory.Flavor.UNIX;
+import static org.apache.sshd.common.FactoryManager.IDLE_TIMEOUT;
+import static org.apache.sshd.server.SshServer.setUpDefaultServer;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.concurrent.TimeUnit.HOURS;
-import static jline.TerminalFactory.Flavor.UNIX;
-import static jline.TerminalFactory.registerFlavor;
-import static org.apache.sshd.server.ServerFactoryManager.IDLE_TIMEOUT;
-import static org.apache.sshd.server.SshServer.setUpDefaultServer;
+import org.apache.sshd.common.Factory;
+import org.apache.sshd.common.NamedFactory;
+import org.apache.sshd.common.PropertyResolverUtils;
+import org.apache.sshd.common.session.Session;
+import org.apache.sshd.common.session.SessionListener;
+import org.apache.sshd.server.SshServer;
+import org.apache.sshd.server.auth.UserAuth;
+import org.apache.sshd.server.auth.UserAuthNoneFactory;
+import org.apache.sshd.server.auth.password.PasswordAuthenticator;
+import org.apache.sshd.server.auth.password.UserAuthPasswordFactory;
+import org.apache.sshd.server.command.Command;
+import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
+import org.codehaus.groovy.tools.shell.Groovysh;
+
+import me.bazhenov.groovysh.thread.DefaultGroovyshThreadFactory;
+import me.bazhenov.groovysh.thread.ServerSessionAwareThreadFactory;
 
 /**
  * Instantiate this class and call {@link #start()} to start a GroovyShell
