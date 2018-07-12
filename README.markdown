@@ -21,7 +21,7 @@ Just include following dependency in your `pom.xml`:
 	<dependency>
 		<groupId>me.bazhenov.groovy-shell</groupId>
 		<artifactId>groovy-shell-server</artifactId>
-		<version>1.6</version>
+		<version>2.0.0</version>
 	</dependency>
 
 Using

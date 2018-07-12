@@ -97,22 +97,6 @@
 					</execution>
 				</executions>
 			</plugin>
-<<<<<<< HEAD
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-gpg-plugin</artifactId>
-				<version>1.6</version>
-				<executions>
-					<execution>
-						<phase>install</phase>
-						<goals>
-							<goal>sign</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-=======
->>>>>>> 61b390677505108a9fe3e34ced107ce7f09f676d
 		</plugins>
 	</build>
 
@@ -148,7 +132,7 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-gpg-plugin</artifactId>
-						<version>1.4</version>
+						<version>1.6</version>
 						<executions>
 							<execution>
 								<phase>install</phase>
