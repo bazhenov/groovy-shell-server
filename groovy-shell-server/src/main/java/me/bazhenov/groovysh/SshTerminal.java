@@ -28,7 +28,6 @@ public class SshTerminal extends UnixTerminal {
 			return columns > 0
 				? columns
 				: DEFAULT_WIDTH;
-
 		} catch (NumberFormatException e) {
 			return DEFAULT_WIDTH;
 		}
@@ -45,7 +44,6 @@ public class SshTerminal extends UnixTerminal {
 			return lines > 0
 				? lines
 				: DEFAULT_HEIGHT;
-
 		} catch (NumberFormatException e) {
 			return DEFAULT_HEIGHT;
 		}
@@ -58,7 +56,6 @@ public class SshTerminal extends UnixTerminal {
 	private static boolean isNullOrEmpty(String value) {
 		return value == null || value.isEmpty();
 	}
-
 
 	static void registerEnvironment(Environment environment) {
 		env.set(environment);

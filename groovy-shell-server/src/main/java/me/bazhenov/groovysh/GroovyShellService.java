@@ -1,33 +1,19 @@
 /**
  * Copyright 2007 Bruce Fancher
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 package me.bazhenov.groovysh;
 
-import static java.util.concurrent.TimeUnit.HOURS;
-import static jline.TerminalFactory.registerFlavor;
-import static jline.TerminalFactory.Flavor.UNIX;
-import static org.apache.sshd.common.FactoryManager.IDLE_TIMEOUT;
-import static org.apache.sshd.server.SshServer.setUpDefaultServer;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
+import me.bazhenov.groovysh.thread.DefaultGroovyshThreadFactory;
+import me.bazhenov.groovysh.thread.ServerSessionAwareThreadFactory;
 import org.apache.sshd.common.Factory;
 import org.apache.sshd.common.NamedFactory;
 import org.apache.sshd.common.PropertyResolverUtils;
@@ -41,9 +27,21 @@ import org.apache.sshd.server.auth.password.UserAuthPasswordFactory;
 import org.apache.sshd.server.command.Command;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.codehaus.groovy.tools.shell.Groovysh;
+import org.codehaus.groovy.tools.shell.util.Preferences;
 
-import me.bazhenov.groovysh.thread.DefaultGroovyshThreadFactory;
-import me.bazhenov.groovysh.thread.ServerSessionAwareThreadFactory;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.HOURS;
+import static jline.TerminalFactory.Flavor.UNIX;
+import static jline.TerminalFactory.registerFlavor;
+import static org.apache.sshd.common.FactoryManager.IDLE_TIMEOUT;
+import static org.apache.sshd.server.SshServer.setUpDefaultServer;
+import static org.codehaus.groovy.tools.shell.util.PackageHelper.IMPORT_COMPLETION_PREFERENCE_KEY;
 
 /**
  * Instantiate this class and call {@link #start()} to start a GroovyShell
@@ -53,16 +51,16 @@ import me.bazhenov.groovysh.thread.ServerSessionAwareThreadFactory;
 @SuppressWarnings("UnusedDeclaration")
 public class GroovyShellService {
 
-	public static final Session.AttributeKey<Groovysh> SHELL_KEY = new Session.AttributeKey<Groovysh>();
-
 	private int port;
 	private String host;
 	private Map<String, Object> bindings;
 	private PasswordAuthenticator passwordAuthenticator;
 	private ServerSessionAwareThreadFactory threadFactory = new DefaultGroovyshThreadFactory();
 
-	private List<String> defaultScripts = new ArrayList<String>();
+	static final Session.AttributeKey<Groovysh> SHELL_KEY = new Session.AttributeKey<>();
+	private List<String> defaultScripts = new ArrayList<>();
 	private SshServer sshd;
+	private boolean disableImportCompletions = false;
 
 	/**
 	 * Uses a default port of 6789
@@ -71,6 +69,7 @@ public class GroovyShellService {
 		this(6789);
 	}
 
+	@SuppressWarnings("WeakerAccess")
 	public GroovyShellService(int port) {
 		if (port <= 0 || port > 65535) {
 			throw new IllegalArgumentException("Wrong port number");
@@ -115,12 +114,27 @@ public class GroovyShellService {
 		this.host = host;
 	}
 
-	public void setPasswordAuthenticator (PasswordAuthenticator passwordAuthenticator) {
+	/**
+	 * Disable import completion autoscan.
+	 * <p>
+	 * Import completion autoscan known to cause problems on a Spring Boot applications packaged in uber-jar. Please,
+	 * keep
+	 * in mind that value is written (and persisted) using Java Preferences API. So once written it should be removed by
+	 * hand (you can use groovysh <code>:set</code> command).
+	 *
+	 * @see <a href="https://github.com/bazhenov/groovy-shell-server/issues/26">groovy-shell-server does not work with
+	 * jdk11</a>
+	 */
+	public void setDisableImportCompletions(boolean disableImportCompletions) {
+		this.disableImportCompletions = disableImportCompletions;
+	}
+
+	public void setPasswordAuthenticator(PasswordAuthenticator passwordAuthenticator) {
 		this.passwordAuthenticator = passwordAuthenticator;
 	}
 
 	public void setThreadFactory(ServerSessionAwareThreadFactory threadFactory) {
-	    this.threadFactory = threadFactory;
+		this.threadFactory = threadFactory;
 	}
 
 	public void setDefaultScripts(List<String> defaultScriptNames) {
@@ -135,9 +149,11 @@ public class GroovyShellService {
 	public synchronized void start() throws IOException {
 		sshd = buildSshServer();
 		sshd.start();
+		if (disableImportCompletions)
+			Preferences.put(IMPORT_COMPLETION_PREFERENCE_KEY, "true");
 	}
 
-	protected SshServer buildSshServer() {
+	private SshServer buildSshServer() {
 		SshServer sshd = setUpDefaultServer();
 		sshd.setPort(port);
 		if (host != null) {
@@ -181,7 +197,7 @@ public class GroovyShellService {
 		} else {
 			auth = new UserAuthNoneFactory();
 		}
-		sshd.setUserAuthFactories(Collections.singletonList(auth));
+		sshd.setUserAuthFactories(singletonList(auth));
 	}
 
 	public synchronized void destroy() throws IOException {

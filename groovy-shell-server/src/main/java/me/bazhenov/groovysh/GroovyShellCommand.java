@@ -1,17 +1,8 @@
 package me.bazhenov.groovysh;
 
-import static java.util.Arrays.asList;
-import static me.bazhenov.groovysh.GroovyShellService.SHELL_KEY;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InterruptedIOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
-import java.util.List;
-import java.util.Map;
-
+import groovy.lang.Binding;
+import groovy.lang.Closure;
+import me.bazhenov.groovysh.thread.ServerSessionAwareThreadFactory;
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.session.helpers.AbstractSession;
 import org.apache.sshd.server.Environment;
@@ -23,9 +14,12 @@ import org.apache.sshd.server.session.ServerSession;
 import org.codehaus.groovy.tools.shell.Groovysh;
 import org.codehaus.groovy.tools.shell.IO;
 
-import groovy.lang.Binding;
-import groovy.lang.Closure;
-import me.bazhenov.groovysh.thread.ServerSessionAwareThreadFactory;
+import java.io.*;
+import java.util.List;
+import java.util.Map;
+
+import static java.util.Collections.singletonList;
+import static me.bazhenov.groovysh.GroovyShellService.SHELL_KEY;
 
 class GroovyShellCommand implements Command, SessionAware {
 
@@ -40,7 +34,8 @@ class GroovyShellCommand implements Command, SessionAware {
 	private Thread wrapper;
 	private ServerSession session;
 
-	public GroovyShellCommand(SshServer sshd, Map<String, Object> bindings, List<String> defaultScripts, ServerSessionAwareThreadFactory threadFactory) {
+	GroovyShellCommand(SshServer sshd, Map<String, Object> bindings, List<String> defaultScripts,
+	                   ServerSessionAwareThreadFactory threadFactory) {
 		this.sshd = sshd;
 		this.bindings = bindings;
 		this.defaultScripts = defaultScripts;
@@ -79,7 +74,7 @@ class GroovyShellCommand implements Command, SessionAware {
 
 		IO io = new IO(in, out, err);
 		io.setVerbosity(IO.Verbosity.DEBUG);
-		final Groovysh shell = new Groovysh(createBinding(bindings, out, err), io);
+		Groovysh shell = new Groovysh(createBinding(bindings, out, err), io);
 		shell.setErrorHook(new Closure(this) {
 			@Override
 			public Object call(Object... args) {
@@ -100,18 +95,13 @@ class GroovyShellCommand implements Command, SessionAware {
 
 		session.setAttribute(SHELL_KEY, shell);
 
-		wrapper = threadFactory.newThread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					SshTerminal.registerEnvironment(env);
-					shell.run("");
-					callback.onExit(0);
-				} catch (RuntimeException e) {
-					callback.onExit(-1, e.getMessage());
-				} catch (Error e) {
-					callback.onExit(-1, e.getMessage());
-				}
+		wrapper = threadFactory.newThread(() -> {
+			try {
+				SshTerminal.registerEnvironment(env);
+				shell.run("");
+				callback.onExit(0);
+			} catch (RuntimeException | Error e) {
+				callback.onExit(-1, e.getMessage());
 			}
 		}, session);
 		wrapper.start();
@@ -142,7 +132,7 @@ class GroovyShellCommand implements Command, SessionAware {
 	}
 
 	@SuppressWarnings({"unchecked", "serial"})
-	private void loadDefaultScripts(final Groovysh shell) {
+	private void loadDefaultScripts(Groovysh shell) {
 		if (!defaultScripts.isEmpty()) {
 			Closure<Groovysh> defaultResultHook = shell.getResultHook();
 
@@ -157,7 +147,7 @@ class GroovyShellCommand implements Command, SessionAware {
 
 				org.codehaus.groovy.tools.shell.Command cmd = shell.getRegistry().find(":load");
 				for (String script : defaultScripts) {
-					cmd.execute(asList(script));
+					cmd.execute(singletonList(script));
 				}
 			} finally {
 				// Restoring original result hook

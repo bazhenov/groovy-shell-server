@@ -2,7 +2,6 @@ package me.bazhenov.groovysh.spring;
 
 import me.bazhenov.groovysh.GroovyShellService;
 import me.bazhenov.groovysh.thread.ServerSessionAwareThreadFactory;
-
 import org.apache.sshd.server.auth.password.PasswordAuthenticator;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanIsAbstractException;
@@ -28,12 +27,19 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 		this.service = newService();
 	}
 
-	protected GroovyShellService newService() {
+	private GroovyShellService newService() {
 		return new GroovyShellService();
 	}
 
 	public void setPort(int port) {
 		service.setPort(port);
+	}
+
+	/**
+	 * @see GroovyShellService#setDisableImportCompletions(boolean)
+	 */
+	public void setDisableImportCompletions(boolean disableImportCompletions) {
+		service.setDisableImportCompletions(disableImportCompletions);
 	}
 
 	public void setLaunchAtStart(boolean launchAtStart) {
@@ -64,7 +70,7 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 	}
 
 	public void setThreadFactory(ServerSessionAwareThreadFactory threadFactory) {
-	    service.setThreadFactory(threadFactory);
+		service.setThreadFactory(threadFactory);
 	}
 
 	/**
@@ -91,7 +97,7 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 	public void afterPropertiesSet() throws Exception {
 		if (launchAtStart) {
 			if (applicationContext != null) {
-				Map<String, Object> bindings = new HashMap<String, Object>();
+				Map<String, Object> bindings = new HashMap<>();
 				if (publishContextBeans)
 					publishContextBeans(bindings, applicationContext);
 				bindings.put("ctx", applicationContext);

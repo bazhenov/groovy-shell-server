@@ -6,7 +6,7 @@ import java.io.OutputStream;
 
 class TtyFilterOutputStream extends FilterOutputStream {
 
-	public TtyFilterOutputStream(OutputStream out) {
+	TtyFilterOutputStream(OutputStream out) {
 		super(out);
 	}
 
