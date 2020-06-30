@@ -11,7 +11,7 @@ import org.apache.sshd.server.SessionAware;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.command.Command;
 import org.apache.sshd.server.session.ServerSession;
-import org.codehaus.groovy.tools.shell.Groovysh;
+import org.apache.groovy.groovysh.Groovysh;
 import org.codehaus.groovy.tools.shell.IO;
 
 import java.io.*;
@@ -75,7 +75,7 @@ class GroovyShellCommand implements Command, SessionAware {
 		IO io = new IO(in, out, err);
 		io.setVerbosity(IO.Verbosity.DEBUG);
 		Groovysh shell = new Groovysh(createBinding(bindings, out, err), io);
-		shell.setErrorHook(new Closure(this) {
+		shell.setErrorHook(new Closure<Object>(this) {
 			@Override
 			public Object call(Object... args) {
 				if (args[0] instanceof InterruptedIOException || args[0] instanceof SshException) {
@@ -145,7 +145,7 @@ class GroovyShellCommand implements Command, SessionAware {
 					}
 				});
 
-				org.codehaus.groovy.tools.shell.Command cmd = shell.getRegistry().find(":load");
+				org.apache.groovy.groovysh.Command cmd = shell.getRegistry().find(":load");
 				for (String script : defaultScripts) {
 					cmd.execute(singletonList(script));
 				}
