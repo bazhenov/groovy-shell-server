@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2007 Bruce Fancher
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -26,7 +26,7 @@ import org.apache.sshd.server.auth.password.PasswordAuthenticator;
 import org.apache.sshd.server.auth.password.UserAuthPasswordFactory;
 import org.apache.sshd.server.command.Command;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
-import org.codehaus.groovy.tools.shell.Groovysh;
+import org.apache.groovy.groovysh.Groovysh;
 import org.codehaus.groovy.tools.shell.util.Preferences;
 
 import java.io.File;
@@ -41,7 +41,7 @@ import static jline.TerminalFactory.Flavor.UNIX;
 import static jline.TerminalFactory.registerFlavor;
 import static org.apache.sshd.common.FactoryManager.IDLE_TIMEOUT;
 import static org.apache.sshd.server.SshServer.setUpDefaultServer;
-import static org.codehaus.groovy.tools.shell.util.PackageHelper.IMPORT_COMPLETION_PREFERENCE_KEY;
+import static org.apache.groovy.groovysh.util.PackageHelper.IMPORT_COMPLETION_PREFERENCE_KEY;
 
 /**
  * Instantiate this class and call {@link #start()} to start a GroovyShell
