@@ -160,7 +160,7 @@ public class GroovyShellService {
 			sshd.setHost(host);
 		}
 
-		PropertyResolverUtils.updateProperty(sshd, IDLE_TIMEOUT, HOURS.toMillis(1));
+		PropertyResolverUtils.updateProperty(sshd, IDLE_TIMEOUT, HOURS.toMillis(8));
 
 		sshd.addSessionListener(new SessionListener() {
 			@Override
