@@ -100,15 +100,15 @@ class GroovyShellCommand implements Command, SessionAware {
 		session.setAttribute(SHELL_KEY, shell);
 
 		wrapper = threadFactory.newThread(() -> {
-					try {
-						SshTerminal.registerEnvironment(env);
-						shell.run("");
-						callback.onExit(0);
-					} catch (RuntimeException | Error e) {
-						callback.onExit(-1, e.getMessage());
-					}
-				},
-				session);
+				try {
+					SshTerminal.registerEnvironment(env);
+					shell.run("");
+					callback.onExit(0);
+				} catch (RuntimeException | Error e) {
+					callback.onExit(-1, e.getMessage());
+				}
+			},
+			session);
 		wrapper.start();
 	}
 
@@ -123,11 +123,11 @@ class GroovyShellCommand implements Command, SessionAware {
 		binding.setVariable("out", createPrintStream(out));
 		binding.setVariable("err", createPrintStream(err));
 		binding.setVariable("activeSessions", new Closure<List<AbstractSession>>(this) {
-				@Override
-				public List<AbstractSession> call() {
-					return sshd.getActiveSessions();
-				}
-			});
+			@Override
+			public List<AbstractSession> call() {
+				return sshd.getActiveSessions();
+			}
+		});
 
 		return binding;
 	}
@@ -141,11 +141,11 @@ class GroovyShellCommand implements Command, SessionAware {
 				// Set a "no-op closure so we don't get per-line value output when evaluating the default
 				// script
 				shell.setResultHook(new Closure<Groovysh>(this) {
-						@Override
-						public Groovysh call(Object... args) {
-							return shell;
-						}
-					});
+					@Override
+					public Groovysh call(Object... args) {
+						return shell;
+					}
+				});
 
 				org.apache.groovy.groovysh.Command cmd = shell.getRegistry().find(":load");
 				for (String script : defaultScripts) {
