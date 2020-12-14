@@ -34,19 +34,15 @@ class GroovyShellCommand implements Command, SessionAware {
 	private Thread wrapper;
 	private ServerSession session;
 
-	GroovyShellCommand(
-		SshServer sshd,
-		Map<String, Object> bindings,
-		List<String> defaultScripts,
-		ServerSessionAwareThreadFactory threadFactory) {
+	GroovyShellCommand(SshServer sshd, Map<String, Object> bindings, List<String> defaultScripts,
+										 ServerSessionAwareThreadFactory threadFactory) {
 		this.sshd = sshd;
 		this.bindings = bindings;
 		this.defaultScripts = defaultScripts;
 		this.threadFactory = threadFactory;
 	}
 
-	private static PrintStream createPrintStream(OutputStream out)
-		throws UnsupportedEncodingException {
+	private static PrintStream createPrintStream(OutputStream out) throws UnsupportedEncodingException {
 		return new PrintStream(out, true, "utf8");
 	}
 
@@ -83,31 +79,27 @@ class GroovyShellCommand implements Command, SessionAware {
 		IO io = new IO(in, out, err);
 		io.setVerbosity(IO.Verbosity.DEBUG);
 		Groovysh shell = new Groovysh(createBinding(bindings, out, err), io);
-		shell.setErrorHook(
-			new Closure<Object>(this) {
-				@Override
-				public Object call(Object... args) {
-					if (args[0] instanceof InterruptedIOException || args[0] instanceof SshException) {
-						// Stopping groovysh thread in case of broken client channel
-						shell.getRunner().setRunning(false);
-					}
-					return shell.getDefaultErrorHook().call(args);
+		shell.setErrorHook(new Closure<Object>(this) {
+			@Override
+			public Object call(Object... args) {
+				if (args[0] instanceof InterruptedIOException || args[0] instanceof SshException) {
+					// Stopping groovysh thread in case of broken client channel
+					shell.getRunner().setRunning(false);
 				}
-			});
+				return shell.getDefaultErrorHook().call(args);
+			}
+		});
 
 		try {
 			loadDefaultScripts(shell);
 		} catch (Exception e) {
-			createPrintStream(err)
-				.println(
-					"Unable to load default scripts: " + e.getClass().getName() + ": " + e.getMessage());
+			createPrintStream(err).println("Unable to load default scripts: "
+				+ e.getClass().getName() + ": " + e.getMessage());
 		}
 
 		session.setAttribute(SHELL_KEY, shell);
 
-		wrapper =
-			threadFactory.newThread(
-				() -> {
+		wrapper = threadFactory.newThread(() -> {
 					try {
 						SshTerminal.registerEnvironment(env);
 						shell.run("");
@@ -130,9 +122,7 @@ class GroovyShellCommand implements Command, SessionAware {
 
 		binding.setVariable("out", createPrintStream(out));
 		binding.setVariable("err", createPrintStream(err));
-		binding.setVariable(
-			"activeSessions",
-			new Closure<List<AbstractSession>>(this) {
+		binding.setVariable("activeSessions", new Closure<List<AbstractSession>>(this) {
 				@Override
 				public List<AbstractSession> call() {
 					return sshd.getActiveSessions();
@@ -150,8 +140,7 @@ class GroovyShellCommand implements Command, SessionAware {
 			try {
 				// Set a "no-op closure so we don't get per-line value output when evaluating the default
 				// script
-				shell.setResultHook(
-					new Closure<Groovysh>(this) {
+				shell.setResultHook(new Closure<Groovysh>(this) {
 						@Override
 						public Groovysh call(Object... args) {
 							return shell;
