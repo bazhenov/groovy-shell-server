@@ -40,6 +40,7 @@ import static java.util.concurrent.TimeUnit.HOURS;
 import static jline.TerminalFactory.Flavor.UNIX;
 import static jline.TerminalFactory.registerFlavor;
 import static org.apache.sshd.common.FactoryManager.IDLE_TIMEOUT;
+import static org.apache.sshd.common.PropertyResolverUtils.updateProperty;
 import static org.apache.sshd.server.SshServer.setUpDefaultServer;
 import static org.apache.groovy.groovysh.util.PackageHelper.IMPORT_COMPLETION_PREFERENCE_KEY;
 
@@ -160,7 +161,7 @@ public class GroovyShellService {
 			sshd.setHost(host);
 		}
 
-		PropertyResolverUtils.updateProperty(sshd, IDLE_TIMEOUT, HOURS.toMillis(8));
+		updateProperty(sshd, IDLE_TIMEOUT, HOURS.toMillis(8));
 
 		sshd.addSessionListener(new SessionListener() {
 			@Override
