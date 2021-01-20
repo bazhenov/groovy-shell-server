@@ -3,6 +3,7 @@ package me.bazhenov.groovysh;
 import groovy.lang.Binding;
 import groovy.lang.Closure;
 import me.bazhenov.groovysh.thread.ServerSessionAwareThreadFactory;
+import org.apache.groovy.groovysh.Groovysh;
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.session.helpers.AbstractSession;
 import org.apache.sshd.server.Environment;
@@ -11,12 +12,12 @@ import org.apache.sshd.server.SessionAware;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.command.Command;
 import org.apache.sshd.server.session.ServerSession;
-import org.apache.groovy.groovysh.Groovysh;
 import org.codehaus.groovy.tools.shell.IO;
 
 import java.io.*;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.Collections.singletonList;
 import static me.bazhenov.groovysh.GroovyShellService.SHELL_KEY;
@@ -33,13 +34,15 @@ class GroovyShellCommand implements Command, SessionAware {
 	private ExitCallback callback;
 	private Thread wrapper;
 	private ServerSession session;
+	private final AtomicBoolean isChannelAlive;
 
 	GroovyShellCommand(SshServer sshd, Map<String, Object> bindings, List<String> defaultScripts,
-	                   ServerSessionAwareThreadFactory threadFactory) {
+										 ServerSessionAwareThreadFactory threadFactory, AtomicBoolean isChannelAlive) {
 		this.sshd = sshd;
 		this.bindings = bindings;
 		this.defaultScripts = defaultScripts;
 		this.threadFactory = threadFactory;
+		this.isChannelAlive = isChannelAlive;
 	}
 
 	@Override
@@ -69,8 +72,8 @@ class GroovyShellCommand implements Command, SessionAware {
 
 	@Override
 	public void start(final Environment env) throws IOException {
-		TtyFilterOutputStream out = new TtyFilterOutputStream(this.out);
-		TtyFilterOutputStream err = new TtyFilterOutputStream(this.err);
+		TtyFilterOutputStream out = new TtyFilterOutputStream(this.out, isChannelAlive);
+		TtyFilterOutputStream err = new TtyFilterOutputStream(this.err, isChannelAlive);
 
 		IO io = new IO(in, out, err);
 		io.setVerbosity(IO.Verbosity.DEBUG);

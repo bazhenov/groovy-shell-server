@@ -14,6 +14,7 @@ package me.bazhenov.groovysh;
 
 import me.bazhenov.groovysh.thread.DefaultGroovyshThreadFactory;
 import me.bazhenov.groovysh.thread.ServerSessionAwareThreadFactory;
+import org.apache.groovy.groovysh.Groovysh;
 import org.apache.sshd.common.Factory;
 import org.apache.sshd.common.NamedFactory;
 import org.apache.sshd.common.PropertyResolverUtils;
@@ -26,7 +27,6 @@ import org.apache.sshd.server.auth.password.PasswordAuthenticator;
 import org.apache.sshd.server.auth.password.UserAuthPasswordFactory;
 import org.apache.sshd.server.command.Command;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
-import org.apache.groovy.groovysh.Groovysh;
 import org.codehaus.groovy.tools.shell.util.Preferences;
 
 import java.io.File;
@@ -34,14 +34,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static jline.TerminalFactory.Flavor.UNIX;
 import static jline.TerminalFactory.registerFlavor;
+import static org.apache.groovy.groovysh.util.PackageHelper.IMPORT_COMPLETION_PREFERENCE_KEY;
 import static org.apache.sshd.common.FactoryManager.IDLE_TIMEOUT;
 import static org.apache.sshd.server.SshServer.setUpDefaultServer;
-import static org.apache.groovy.groovysh.util.PackageHelper.IMPORT_COMPLETION_PREFERENCE_KEY;
 
 /**
  * Instantiate this class and call {@link #start()} to start a GroovyShell
@@ -61,6 +62,7 @@ public class GroovyShellService {
 	private List<String> defaultScripts = new ArrayList<>();
 	private SshServer sshd;
 	private boolean disableImportCompletions = false;
+	private final AtomicBoolean isServiceAlive = new AtomicBoolean(true);
 
 	/**
 	 * Uses a default port of 6789
@@ -160,7 +162,7 @@ public class GroovyShellService {
 			sshd.setHost(host);
 		}
 
-		PropertyResolverUtils.updateProperty(sshd, IDLE_TIMEOUT, HOURS.toMillis(9));
+		PropertyResolverUtils.updateProperty(sshd, IDLE_TIMEOUT, HOURS.toMillis(1));
 
 		sshd.addSessionListener(new SessionListener() {
 			@Override
@@ -201,6 +203,7 @@ public class GroovyShellService {
 	}
 
 	public synchronized void destroy() throws IOException {
+		isServiceAlive.set(false);
 		sshd.stop(true);
 	}
 
@@ -208,7 +211,7 @@ public class GroovyShellService {
 
 		@Override
 		public Command create() {
-			return new GroovyShellCommand(sshd, bindings, defaultScripts, threadFactory);
+			return new GroovyShellCommand(sshd, bindings, defaultScripts, threadFactory, isServiceAlive);
 		}
 	}
 }
