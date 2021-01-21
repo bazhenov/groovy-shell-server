@@ -8,14 +8,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class TtyFilterOutputStream extends FilterOutputStream {
 
 	/**
-	 * Существует сценарий (как например при ручном вызове 'groovyShell.destroy()' из сессии самого GroovyShell),
-	 * при котором результат команды не может быть отображен пользователю GroovyShell,
-	 * поскольку ssh канал уже закрыт, что вызывает рекурсивный поток ошибок
-	 * при попытке вывести пользователю уже исключение, что засоряет логи
-	 * приложения эксплуатирующего GroovyShellServiceBean (см. SR-1121).
+	 * There is a some cases ('groovyShell.destroy()' called from GroovyShell session for example)
+	 * when the result of the command cannot be displayed to the GroovyShell user,
+	 * because the ssh channel is already closed.
+	 * The error message that has occurred cannot be displayed either.
+	 * This causes a stream of recursive errors to fill up application logs.
 	 * <p>
-	 * Поэтому, добавляем здесь явную проверку что ssh-канал для записи жив,
-	 * чтобы погасить SshChannelClosedException в родительском классе и избежать такой рекурсии.
+	 * Therefore, we add here an explicit check that the ssh channel is alive,
+	 * in order to extinguish the SshChannelClosedException
+	 * in the parent class and avoid such recursion.
 	 */
 	private final AtomicBoolean isChannelAlive;
 
