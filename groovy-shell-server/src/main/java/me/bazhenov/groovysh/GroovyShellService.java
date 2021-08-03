@@ -38,10 +38,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.HOURS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static jline.TerminalFactory.Flavor.UNIX;
 import static jline.TerminalFactory.registerFlavor;
 import static org.apache.groovy.groovysh.util.PackageHelper.IMPORT_COMPLETION_PREFERENCE_KEY;
 import static org.apache.sshd.common.FactoryManager.IDLE_TIMEOUT;
+import static org.apache.sshd.common.FactoryManager.NIO2_READ_TIMEOUT;
 import static org.apache.sshd.server.SshServer.setUpDefaultServer;
 
 /**
@@ -162,7 +164,9 @@ public class GroovyShellService {
 			sshd.setHost(host);
 		}
 
-		PropertyResolverUtils.updateProperty(sshd, IDLE_TIMEOUT, HOURS.toMillis(1));
+		long idleTimeOut = HOURS.toMillis(1);
+		PropertyResolverUtils.updateProperty(sshd, IDLE_TIMEOUT, idleTimeOut);
+		PropertyResolverUtils.updateProperty(sshd, NIO2_READ_TIMEOUT, idleTimeOut+SECONDS.toMillis(15L));
 
 		sshd.addSessionListener(new SessionListener() {
 			@Override
