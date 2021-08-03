@@ -2,6 +2,7 @@ package me.bazhenov.groovysh;
 
 import static java.util.Collections.singletonList;
 import static me.bazhenov.groovysh.GroovyShellService.SHELL_KEY;
+import static org.codehaus.groovy.tools.shell.IO.Verbosity.DEBUG;
 
 import groovy.lang.Binding;
 import groovy.lang.Closure;
@@ -14,44 +15,35 @@ import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import me.bazhenov.groovysh.thread.ServerSessionAwareThreadFactory;
 import org.apache.groovy.groovysh.Groovysh;
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.session.helpers.AbstractSession;
 import org.apache.sshd.server.Environment;
 import org.apache.sshd.server.ExitCallback;
-import org.apache.sshd.server.SessionAware;
 import org.apache.sshd.server.SshServer;
+import org.apache.sshd.server.channel.ChannelSession;
 import org.apache.sshd.server.command.Command;
-import org.apache.sshd.server.session.ServerSession;
 import org.codehaus.groovy.tools.shell.IO;
 
-class GroovyShellCommand implements Command, SessionAware {
+class GroovyShellCommand implements Command {
 
   private final SshServer sshd;
   private final Map<String, Object> bindings;
   private final List<String> defaultScripts;
-  private final ServerSessionAwareThreadFactory threadFactory;
   private InputStream in;
   private OutputStream out;
   private OutputStream err;
   private ExitCallback callback;
   private Thread wrapper;
-  private ServerSession session;
+  private ChannelSession session;
   private final AtomicBoolean isChannelAlive;
 
   GroovyShellCommand(SshServer sshd, Map<String, Object> bindings, List<String> defaultScripts,
-      ServerSessionAwareThreadFactory threadFactory, AtomicBoolean isChannelAlive) {
+      AtomicBoolean isChannelAlive) {
     this.sshd = sshd;
     this.bindings = bindings;
     this.defaultScripts = defaultScripts;
-    this.threadFactory = threadFactory;
     this.isChannelAlive = isChannelAlive;
-  }
-
-  @Override
-  public void setSession(ServerSession session) {
-    this.session = session;
   }
 
   @Override
@@ -75,12 +67,13 @@ class GroovyShellCommand implements Command, SessionAware {
   }
 
   @Override
-  public void start(final Environment env) throws IOException {
+  public void start(ChannelSession session, Environment env) throws IOException {
+    this.session = session;
     TtyFilterOutputStream out = new TtyFilterOutputStream(this.out, isChannelAlive);
     TtyFilterOutputStream err = new TtyFilterOutputStream(this.err, isChannelAlive);
 
     IO io = new IO(in, out, err);
-    io.setVerbosity(IO.Verbosity.DEBUG);
+    io.setVerbosity(DEBUG);
     Groovysh shell = new Groovysh(createBinding(bindings, out, err), io);
     shell.setErrorHook(new Closure<Object>(this) {
       @Override
@@ -100,9 +93,9 @@ class GroovyShellCommand implements Command, SessionAware {
           + e.getClass().getName() + ": " + e.getMessage());
     }
 
-    session.setAttribute(SHELL_KEY, shell);
+    this.session.setAttribute(SHELL_KEY, shell);
 
-    wrapper = threadFactory.newThread(() -> {
+    Runnable runnable = () -> {
       try {
         SshTerminal.registerEnvironment(env);
         shell.run("");
@@ -110,19 +103,26 @@ class GroovyShellCommand implements Command, SessionAware {
       } catch (RuntimeException | Error e) {
         callback.onExit(-1, e.getMessage());
       }
-    }, session);
+    };
+    wrapper = newThread(runnable, this.session);
     wrapper.start();
+  }
+
+  private static Thread newThread(Runnable r, ChannelSession session) {
+    String address = session.getSession().getIoSession().getRemoteAddress().toString();
+    String threadName = "GroovySh Client Thread: " + address;
+    return new Thread(r, threadName);
   }
 
   private Binding createBinding(Map<String, Object> objects, OutputStream out, OutputStream err)
       throws UnsupportedEncodingException {
     Binding binding = new Binding();
 
-		if (objects != null) {
-			for (Map.Entry<String, Object> row : objects.entrySet()) {
-				binding.setVariable(row.getKey(), row.getValue());
-			}
-		}
+    if (objects != null) {
+      for (Map.Entry<String, Object> row : objects.entrySet()) {
+        binding.setVariable(row.getKey(), row.getValue());
+      }
+    }
 
     binding.setVariable("out", createPrintStream(out));
     binding.setVariable("err", createPrintStream(err));
@@ -167,7 +167,7 @@ class GroovyShellCommand implements Command, SessionAware {
   }
 
   @Override
-  public void destroy() {
+  public void destroy(ChannelSession channel) {
     wrapper.interrupt();
   }
 }

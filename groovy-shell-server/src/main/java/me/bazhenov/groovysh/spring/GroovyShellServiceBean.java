@@ -5,7 +5,6 @@ import static java.util.Arrays.asList;
 import java.util.HashMap;
 import java.util.Map;
 import me.bazhenov.groovysh.GroovyShellService;
-import me.bazhenov.groovysh.thread.ServerSessionAwareThreadFactory;
 import org.apache.sshd.server.auth.password.PasswordAuthenticator;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanIsAbstractException;
@@ -67,10 +66,6 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 
   public void setPasswordAuthenticator(PasswordAuthenticator passwordAuthenticator) {
     service.setPasswordAuthenticator(passwordAuthenticator);
-  }
-
-  public void setThreadFactory(ServerSessionAwareThreadFactory threadFactory) {
-    service.setThreadFactory(threadFactory);
   }
 
   /**

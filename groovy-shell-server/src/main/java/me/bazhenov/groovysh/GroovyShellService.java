@@ -18,8 +18,9 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static jline.TerminalFactory.Flavor.UNIX;
 import static jline.TerminalFactory.registerFlavor;
 import static org.apache.groovy.groovysh.util.PackageHelper.IMPORT_COMPLETION_PREFERENCE_KEY;
-import static org.apache.sshd.common.FactoryManager.IDLE_TIMEOUT;
-import static org.apache.sshd.common.FactoryManager.NIO2_READ_TIMEOUT;
+import static org.apache.sshd.common.PropertyResolverUtils.updateProperty;
+import static org.apache.sshd.core.CoreModuleProperties.IDLE_TIMEOUT;
+import static org.apache.sshd.core.CoreModuleProperties.NIO2_READ_TIMEOUT;
 import static org.apache.sshd.server.SshServer.setUpDefaultServer;
 
 import java.io.File;
@@ -28,21 +29,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import me.bazhenov.groovysh.thread.DefaultGroovyshThreadFactory;
-import me.bazhenov.groovysh.thread.ServerSessionAwareThreadFactory;
 import org.apache.groovy.groovysh.Groovysh;
-import org.apache.sshd.common.Factory;
-import org.apache.sshd.common.NamedFactory;
-import org.apache.sshd.common.PropertyResolverUtils;
 import org.apache.sshd.common.session.Session;
 import org.apache.sshd.common.session.SessionListener;
 import org.apache.sshd.server.SshServer;
-import org.apache.sshd.server.auth.UserAuth;
+import org.apache.sshd.server.auth.UserAuthFactory;
 import org.apache.sshd.server.auth.UserAuthNoneFactory;
 import org.apache.sshd.server.auth.password.PasswordAuthenticator;
 import org.apache.sshd.server.auth.password.UserAuthPasswordFactory;
+import org.apache.sshd.server.channel.ChannelSession;
 import org.apache.sshd.server.command.Command;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
+import org.apache.sshd.server.shell.ShellFactory;
 import org.codehaus.groovy.tools.shell.util.Preferences;
 
 /**
@@ -57,7 +55,6 @@ public class GroovyShellService {
   private String host;
   private Map<String, Object> bindings;
   private PasswordAuthenticator passwordAuthenticator;
-  private ServerSessionAwareThreadFactory threadFactory = new DefaultGroovyshThreadFactory();
 
   static final Session.AttributeKey<Groovysh> SHELL_KEY = new Session.AttributeKey<>();
   private List<String> defaultScripts = new ArrayList<>();
@@ -136,10 +133,6 @@ public class GroovyShellService {
     this.passwordAuthenticator = passwordAuthenticator;
   }
 
-  public void setThreadFactory(ServerSessionAwareThreadFactory threadFactory) {
-    this.threadFactory = threadFactory;
-  }
-
   public void setDefaultScripts(List<String> defaultScriptNames) {
     this.defaultScripts = defaultScriptNames;
   }
@@ -152,9 +145,9 @@ public class GroovyShellService {
   public synchronized void start() throws IOException {
     sshd = buildSshServer();
     sshd.start();
-		if (disableImportCompletions) {
-			Preferences.put(IMPORT_COMPLETION_PREFERENCE_KEY, "true");
-		}
+    if (disableImportCompletions) {
+      Preferences.put(IMPORT_COMPLETION_PREFERENCE_KEY, "true");
+    }
   }
 
   private SshServer buildSshServer() {
@@ -165,9 +158,8 @@ public class GroovyShellService {
     }
 
     long idleTimeOut = HOURS.toMillis(1);
-    PropertyResolverUtils.updateProperty(sshd, IDLE_TIMEOUT, idleTimeOut);
-    PropertyResolverUtils
-        .updateProperty(sshd, NIO2_READ_TIMEOUT, idleTimeOut + SECONDS.toMillis(15L));
+    updateProperty(sshd, IDLE_TIMEOUT.getName(), idleTimeOut);
+    updateProperty(sshd, NIO2_READ_TIMEOUT.getName(), idleTimeOut + SECONDS.toMillis(15L));
 
     sshd.addSessionListener(new SessionListener() {
       @Override
@@ -185,9 +177,9 @@ public class GroovyShellService {
       @Override
       public void sessionClosed(Session session) {
         Groovysh shell = session.getAttribute(SHELL_KEY);
-				if (shell != null) {
-					shell.getRunner().setRunning(false);
-				}
+        if (shell != null) {
+          shell.getRunner().setRunning(false);
+        }
       }
     });
 
@@ -198,7 +190,7 @@ public class GroovyShellService {
   }
 
   private void configureAuthentication(SshServer sshd) {
-    NamedFactory<UserAuth> auth;
+    UserAuthFactory auth;
     if (this.passwordAuthenticator != null) {
       sshd.setPasswordAuthenticator(this.passwordAuthenticator);
       auth = new UserAuthPasswordFactory();
@@ -213,11 +205,11 @@ public class GroovyShellService {
     sshd.stop(true);
   }
 
-  class GroovyShellFactory implements Factory<Command> {
+  class GroovyShellFactory implements ShellFactory {
 
     @Override
-    public Command create() {
-      return new GroovyShellCommand(sshd, bindings, defaultScripts, threadFactory, isServiceAlive);
+    public Command createShell(ChannelSession channel) {
+      return new GroovyShellCommand(sshd, bindings, defaultScripts, isServiceAlive);
     }
   }
 }
