@@ -87,14 +87,6 @@ as `ctx`. So in shell you can get objects from container by id or type (e.g. `ct
 
 It is also possible to enable password authentication by setting `passwordAuthenticator` property on `GroovyShellServiceBean`.
 
-Build
------
-Use `maven-assembly` plugin to build and create archive of `groovy-shell-server`:
-
-	mvn package
-
-Archives will be placed in `groovy-shell-server/target/`.
-
 ### Simple run
 
 In order to simple run applications you can use `maven-exec` plugin:
@@ -108,3 +100,25 @@ What if a well-meaning developer fires up a remote shell and accidentally execut
 each GroovyShellService instance registers itself with the default MBeanServer and provides a "killAllClients" operation to kill
 any open client sockets and stop the associated client threads. Thus you can connect with jconsole or your favorite JMX frontend
 to resolve this issue if it arises.
+
+Build
+-----
+Use `maven-assembly` plugin to build and create archive of `groovy-shell-server`:
+
+	mvn package
+
+Archives will be placed in `groovy-shell-server/target/`.
+
+Deploy
+------
+
+Deploying to Maven Central:
+
+	mvn clean deploy
+
+On Java 16 following variable should be exported:
+
+	MAVEN_OPTS="--add-opens=java.base/java.util=ALL-UNNAMED\
+		--add-opens=java.base/java.lang.reflect=ALL-UNNAMED\
+		--add-opens=java.base/java.text=ALL-UNNAMED\
+		--add-opens=java.desktop/java.awt.font=ALL-UNNAMED"
