@@ -1,20 +1,7 @@
 package me.bazhenov.groovysh;
 
-import static java.util.Collections.singletonList;
-import static me.bazhenov.groovysh.GroovyShellService.SHELL_KEY;
-import static org.codehaus.groovy.tools.shell.IO.Verbosity.DEBUG;
-
 import groovy.lang.Binding;
 import groovy.lang.Closure;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InterruptedIOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.groovy.groovysh.Groovysh;
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.session.helpers.AbstractSession;
@@ -24,6 +11,15 @@ import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.channel.ChannelSession;
 import org.apache.sshd.server.command.Command;
 import org.codehaus.groovy.tools.shell.IO;
+
+import java.io.*;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static java.util.Collections.singletonList;
+import static me.bazhenov.groovysh.GroovyShellService.SHELL_KEY;
+import static org.codehaus.groovy.tools.shell.IO.Verbosity.DEBUG;
 
 class GroovyShellCommand implements Command {
 
@@ -36,14 +32,14 @@ class GroovyShellCommand implements Command {
   private ExitCallback callback;
   private Thread wrapper;
   private ChannelSession session;
-  private final AtomicBoolean isChannelAlive;
+  private final AtomicBoolean isServiceAlive;
 
   GroovyShellCommand(SshServer sshd, Map<String, Object> bindings, List<String> defaultScripts,
-      AtomicBoolean isChannelAlive) {
+      AtomicBoolean isServiceAlive) {
     this.sshd = sshd;
     this.bindings = bindings;
     this.defaultScripts = defaultScripts;
-    this.isChannelAlive = isChannelAlive;
+    this.isServiceAlive = isServiceAlive;
   }
 
   @Override
@@ -69,8 +65,8 @@ class GroovyShellCommand implements Command {
   @Override
   public void start(ChannelSession session, Environment env) throws IOException {
     this.session = session;
-    TtyFilterOutputStream out = new TtyFilterOutputStream(this.out, isChannelAlive);
-    TtyFilterOutputStream err = new TtyFilterOutputStream(this.err, isChannelAlive);
+    TtyFilterOutputStream out = new TtyFilterOutputStream(this.out, isServiceAlive);
+    TtyFilterOutputStream err = new TtyFilterOutputStream(this.err, isServiceAlive);
 
     IO io = new IO(in, out, err);
     io.setVerbosity(DEBUG);
