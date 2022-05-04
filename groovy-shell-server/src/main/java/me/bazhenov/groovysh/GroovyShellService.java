@@ -12,23 +12,6 @@
  */
 package me.bazhenov.groovysh;
 
-import static java.util.Collections.singletonList;
-import static java.util.concurrent.TimeUnit.HOURS;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static jline.TerminalFactory.Flavor.UNIX;
-import static jline.TerminalFactory.registerFlavor;
-import static org.apache.groovy.groovysh.util.PackageHelper.IMPORT_COMPLETION_PREFERENCE_KEY;
-import static org.apache.sshd.common.PropertyResolverUtils.updateProperty;
-import static org.apache.sshd.core.CoreModuleProperties.IDLE_TIMEOUT;
-import static org.apache.sshd.core.CoreModuleProperties.NIO2_READ_TIMEOUT;
-import static org.apache.sshd.server.SshServer.setUpDefaultServer;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.groovy.groovysh.Groovysh;
 import org.apache.sshd.common.session.Session;
 import org.apache.sshd.common.session.SessionListener;
@@ -43,6 +26,24 @@ import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.shell.ShellFactory;
 import org.codehaus.groovy.tools.shell.util.Preferences;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.HOURS;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static jline.TerminalFactory.Flavor.UNIX;
+import static jline.TerminalFactory.registerFlavor;
+import static org.apache.groovy.groovysh.util.PackageHelper.IMPORT_COMPLETION_PREFERENCE_KEY;
+import static org.apache.sshd.common.PropertyResolverUtils.updateProperty;
+import static org.apache.sshd.core.CoreModuleProperties.IDLE_TIMEOUT;
+import static org.apache.sshd.core.CoreModuleProperties.NIO2_READ_TIMEOUT;
+import static org.apache.sshd.server.SshServer.setUpDefaultServer;
+
 /**
  * Instantiate this class and call {@link #start()} to start a GroovyShell
  *
@@ -55,6 +56,7 @@ public class GroovyShellService {
   private String host;
   private Map<String, Object> bindings;
   private PasswordAuthenticator passwordAuthenticator;
+  private long idleTimeOut = HOURS.toMillis(1);
 
   static final Session.AttributeKey<Groovysh> SHELL_KEY = new Session.AttributeKey<>();
   private List<String> defaultScripts = new ArrayList<>();
@@ -114,6 +116,13 @@ public class GroovyShellService {
     this.host = host;
   }
 
+  public void setIdleTimeOut(long timeOut) {
+    if (timeOut < 0) {
+      throw new IllegalArgumentException("Wrong timeout");
+    }
+    this.idleTimeOut = timeOut;
+  }
+
   /**
    * Disable import completion autoscan.
    * <p>
@@ -157,7 +166,7 @@ public class GroovyShellService {
       sshd.setHost(host);
     }
 
-    long idleTimeOut = HOURS.toMillis(1);
+    long idleTimeOut = this.idleTimeOut;
     updateProperty(sshd, IDLE_TIMEOUT.getName(), idleTimeOut);
     updateProperty(sshd, NIO2_READ_TIMEOUT.getName(), idleTimeOut + SECONDS.toMillis(15L));
 

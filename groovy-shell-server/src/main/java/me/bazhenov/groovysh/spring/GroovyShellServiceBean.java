@@ -1,9 +1,5 @@
 package me.bazhenov.groovysh.spring;
 
-import static java.util.Arrays.asList;
-
-import java.util.HashMap;
-import java.util.Map;
 import me.bazhenov.groovysh.GroovyShellService;
 import org.apache.sshd.server.auth.password.PasswordAuthenticator;
 import org.springframework.beans.BeansException;
@@ -12,6 +8,11 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static java.util.Arrays.asList;
 
 @SuppressWarnings("UnusedDeclaration")
 public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
@@ -32,6 +33,10 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
 
   public void setPort(int port) {
     service.setPort(port);
+  }
+
+  public void setIdleTimeOut(long timeout) {
+    service.setIdleTimeOut(timeout);
   }
 
   /**

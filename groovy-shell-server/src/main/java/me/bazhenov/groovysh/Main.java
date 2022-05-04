@@ -1,8 +1,8 @@
 package me.bazhenov.groovysh;
 
-import static java.lang.Thread.currentThread;
-
 import java.io.IOException;
+
+import static java.lang.Thread.currentThread;
 
 public class Main {
 

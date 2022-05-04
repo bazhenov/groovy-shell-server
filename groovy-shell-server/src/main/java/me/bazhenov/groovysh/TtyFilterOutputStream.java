@@ -1,5 +1,7 @@
 package me.bazhenov.groovysh;
 
+import org.apache.sshd.common.channel.exception.SshChannelException;
+
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -16,37 +18,51 @@ class TtyFilterOutputStream extends FilterOutputStream {
    * Therefore, we add here an explicit check that the ssh channel is alive, in order to extinguish
    * the SshChannelClosedException in the parent class and avoid such recursion.
    */
-  private final AtomicBoolean isChannelAlive;
+  private final AtomicBoolean isServiceAlive, isChannelAlive = new AtomicBoolean(true);
 
-  TtyFilterOutputStream(OutputStream out, AtomicBoolean isChannelAlive) {
+  TtyFilterOutputStream(OutputStream out, AtomicBoolean isServiceAlive) {
     super(out);
-    this.isChannelAlive = isChannelAlive;
+    this.isServiceAlive = isServiceAlive;
   }
 
   @Override
   public void write(int c) throws IOException {
-    if (isChannelAlive.get()) {
-      if (c == '\n') {
+    if (isAlive()) {
+      try {
+        if (c == '\n') {
+          super.write(c);
+          c = '\r';
+        }
         super.write(c);
-        c = '\r';
+      } catch (SshChannelException e) {
+        isChannelAlive.set(false);
+        throw e;
       }
-      super.write(c);
     }
   }
 
   @Override
   public void flush() throws IOException {
-    if (isChannelAlive.get()) {
-      super.flush();
+    if (isAlive()) {
+      try {
+        super.flush();
+      } catch (SshChannelException e) {
+        isChannelAlive.set(false);
+        throw e;
+      }
     }
   }
 
   @Override
   public void write(byte[] b, int off, int len) throws IOException {
-    if (isChannelAlive.get()) {
+    if (isAlive()) {
       for (int i = off; i < len; i++) {
         write(b[i]);
       }
     }
+  }
+
+  private boolean isAlive() {
+    return isServiceAlive.get() && isChannelAlive.get();
   }
 }
