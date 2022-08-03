@@ -9,8 +9,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static java.util.Arrays.asList;
 
@@ -113,7 +112,7 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
   }
 
   private static void publishContextBeans(Map<String, Object> bindings, ApplicationContext ctx) {
-    for (String name : ctx.getBeanDefinitionNames()) {
+    for (String name : getContextBeans(ctx)) {
       if (!name.contains("#")) { // skip beans without explicit id given
         try {
           bindings.put(name, ctx.getBean(name));
@@ -122,5 +121,13 @@ public class GroovyShellServiceBean implements InitializingBean, DisposableBean,
         }
       }
     }
+  }
+
+  private static String[] getContextBeans(ApplicationContext ctx) {
+    Set<String> shellNames = new HashSet<>();
+    Collections.addAll(shellNames, ctx.getBeanNamesForType(GroovyShellServiceBean.class));
+    return Arrays.stream(ctx.getBeanDefinitionNames())
+            .filter(beanName -> !shellNames.contains(beanName))
+            .toArray(String[]::new);
   }
 }
