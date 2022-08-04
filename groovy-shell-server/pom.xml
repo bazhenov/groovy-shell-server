@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>me.bazhenov.groovy-shell</groupId>
 		<artifactId>groovy-shell-parent</artifactId>
-		<version>2.2.3-SNAPSHOT</version>
+		<version>2.2.4-SNAPSHOT</version>
 	</parent>
 
 	<properties>
